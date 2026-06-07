@@ -1,9 +1,10 @@
 # Deploying karots.lk
 
 This is an Astro site with a **static public site** + **SSR admin/API** on Cloudflare,
-backed by **Neon** (Postgres) and **Cloudflare R2** (image uploads). Edits in the admin
-panel are saved to Neon immediately; the public site is rebuilt on demand via the
-**Publish** button (a Cloudflare deploy hook).
+backed by **Neon** (Postgres) and **UploadThing** (image uploads). Edits in the admin
+panel are saved to Neon immediately; the public site is rebuilt by a **GitHub Actions**
+workflow on every push to `main` and on demand via the **Publish** button (which
+triggers the workflow via the GitHub API).
 
 ## 1. Prerequisites (one-time accounts)
 
@@ -24,11 +25,11 @@ and locally in `.dev.vars` (gitignored). `.env`/`.env.example` document them too
 | `ALLOWED_GITHUB_LOGIN` | Only this GitHub login may sign in | `Adhnan23` |
 | `SESSION_SECRET` | Signs session JWTs | `openssl rand -hex 32` |
 | `PUBLIC_SITE_URL` | Canonical site origin | `https://karots.lk` |
-| `CF_DEPLOY_HOOK_URL` | Triggers a rebuild on Publish | Cloudflare Pages deploy hook (step 5) |
+| `GITHUB_DISPATCH_TOKEN` | Lets the Publish button trigger the deploy workflow | Fine-grained GitHub PAT on `karots-portfolio`, Actions: Read & write |
 | `UPLOADTHING_TOKEN` | Admin image uploads (preferred) | uploadthing.com dashboard → API Keys |
 | `R2_PUBLIC_URL` | Optional R2 fallback for uploads | R2 bucket public domain (step 6) |
 
-> `SESSION_SECRET`, `GITHUB_CLIENT_SECRET`, `DATABASE_URL`, and `CF_DEPLOY_HOOK_URL`
+> `SESSION_SECRET`, `GITHUB_CLIENT_SECRET`, `DATABASE_URL`, and `GITHUB_DISPATCH_TOKEN`
 > are **secrets** — never commit them. They already live only in gitignored files.
 
 ## 3. GitHub OAuth App
@@ -48,17 +49,24 @@ bun run db:migrate     # applies drizzle/*.sql
 bun run db:seed        # optional: load initial content (already done once)
 ```
 
-## 5. Cloudflare Pages
+## 5. Deploys (GitHub Actions → Cloudflare Pages)
 
-1. Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** → this repo.
-2. Build settings:
-   - **Build command**: `bun run build`
-   - **Build output directory**: `dist`
-   - **Compatibility flags**: `nodejs_compat` (already in `wrangler.jsonc`).
-3. Add all environment variables from step 2.
-4. After the first deploy, create a **Deploy hook**
-   (Settings → Builds & deployments → Deploy hooks) and set its URL as
-   `CF_DEPLOY_HOOK_URL`. The admin **Publish** button POSTs to it.
+The site deploys via `.github/workflows/deploy.yml` — on every push to `main` and on
+manual trigger. It builds with bun and runs `wrangler pages deploy dist` against the
+**direct-upload** Pages project `karotsportfolio` (no Git connection on the CF side).
+
+Set these as **GitHub → repo → Settings → Secrets and variables → Actions → Repository secrets**:
+
+| Secret | Value |
+|---|---|
+| `DATABASE_URL` | Neon pooled connection string (build-time content fetch) |
+| `CLOUDFLARE_API_TOKEN` | CF token with **Account → Cloudflare Pages → Edit** |
+| `CLOUDFLARE_ACCOUNT_ID` | `a486bb41a30df886d13e0f6881632f18` |
+
+The admin **Publish** button triggers this same workflow via the GitHub
+`workflow_dispatch` API, authenticated with `GITHUB_DISPATCH_TOKEN` (a Cloudflare Pages
+secret). `wrangler pages deploy` preserves existing Pages **secrets** and applies the
+plain-text `vars` from `wrangler.jsonc`, so runtime config is not lost on deploy.
 
 ## 6. Image uploads
 
