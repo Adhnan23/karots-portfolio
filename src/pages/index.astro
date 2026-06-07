@@ -1,0 +1,26 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { SITE } from "@/lib/nav";
+// NOTE: placeholder home — replaced with DB-driven content in Phase 3.
+---
+
+<BaseLayout>
+  <section class="container-page py-24 md:py-32">
+    <p class="mono-label">whoami</p>
+    <h1 class="mt-4 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
+      {SITE.name.split(" ")[0]}{" "}
+      <span class="text-accent">{SITE.name.split(" ").slice(1).join(" ")}</span>
+    </h1>
+    <p class="mt-5 max-w-2xl text-lg text-fg-muted">
+      {SITE.role} — building and shipping systems real users depend on, from REST
+      APIs and database architecture to Dockerized, SSL-secured self-hosted infra.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="/projects" class="btn btn-primary">view projects</a>
+      <a href="/contact" class="btn btn-ghost">get in touch</a>
+    </div>
+    <p class="mt-12 font-mono text-sm text-fg-subtle">
+      <span class="text-accent">$</span> status: scaffolding — content coming in next phase
+    </p>
+  </section>
+</BaseLayout>

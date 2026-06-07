@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "karots-portfolio",
+  "compatibility_date": "2025-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "./dist",
+  // R2 bucket for admin image uploads. Create with:
+  //   wrangler r2 bucket create karots-portfolio-media
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "karots-portfolio-media"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+# deps
+node_modules/
+
+# build output
+dist/
+.astro/
+.wrangler/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+!.dev.vars.example
+
+# os / editor
+.DS_Store
+*.log
+npm-debug.log*
+
+# misc
+.cache/
+coverage/
