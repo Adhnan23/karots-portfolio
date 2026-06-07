@@ -16,7 +16,10 @@ export const SITE = {
   locale: "en_US",
   twitter: "@karots",
   // Profiles that resolve to the same person (for schema.org sameAs).
-  sameAs: ["https://github.com/Adhnan23"],
+  sameAs: [
+    "https://github.com/Adhnan23",
+    "https://www.linkedin.com/in/sheik-adhnan-820a5a21a/",
+  ],
   // Topics this person is an authority on (schema.org knowsAbout / keywords).
   knowsAbout: [
     "Backend Engineering",
