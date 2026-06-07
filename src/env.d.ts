@@ -10,7 +10,7 @@ interface CloudflareEnv {
   GITHUB_CLIENT_SECRET: string;
   SESSION_SECRET: string;
   ALLOWED_GITHUB_LOGIN: string;
-  CF_DEPLOY_HOOK_URL?: string;
+  GITHUB_DISPATCH_TOKEN?: string;
   PUBLIC_SITE_URL?: string;
   UPLOADTHING_TOKEN?: string;
   R2_PUBLIC_URL?: string;
@@ -34,7 +34,7 @@ interface ImportMetaEnv {
   readonly GITHUB_CLIENT_SECRET?: string;
   readonly SESSION_SECRET?: string;
   readonly ALLOWED_GITHUB_LOGIN?: string;
-  readonly CF_DEPLOY_HOOK_URL?: string;
+  readonly GITHUB_DISPATCH_TOKEN?: string;
   readonly PUBLIC_SITE_URL?: string;
   readonly UPLOADTHING_TOKEN?: string;
   readonly R2_PUBLIC_URL?: string;
