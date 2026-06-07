@@ -1,0 +1,46 @@
+---
+/**
+ * Cover thumbnail for blog cards. Renders the post's cover image, or a branded
+ * terminal-style placeholder (so a card grid stays uniform when a post has no
+ * cover). Used by the public BlogCard and the admin blog list.
+ */
+interface Props {
+  src?: string | null;
+  title: string;
+  class?: string;
+}
+const { src, title, class: extra = "" } = Astro.props;
+
+const initials = title
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((w) => w[0]?.toUpperCase() ?? "")
+  .join("");
+---
+
+{
+  src ? (
+    <img
+      src={src}
+      alt={title}
+      loading="lazy"
+      class={`aspect-[16/9] w-full rounded-md border border-border object-cover ${extra}`}
+    />
+  ) : (
+    <div
+      class={`cover-placeholder flex aspect-[16/9] w-full items-center justify-center rounded-md border border-border ${extra}`}
+    >
+      <span class="font-mono text-xs text-accent/70">//</span>
+      <span class="ml-2 font-display text-3xl font-bold text-fg-subtle">{initials || "~"}</span>
+    </div>
+  )
+}
+
+<style>
+  .cover-placeholder {
+    background:
+      radial-gradient(120% 120% at 0% 0%, var(--color-accent-dim) 0%, transparent 55%),
+      var(--color-bg-soft);
+  }
+</style>

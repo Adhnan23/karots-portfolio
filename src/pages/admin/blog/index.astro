@@ -1,6 +1,7 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import Flash from "@/components/admin/Flash.astro";
+import CoverThumb from "@/components/CoverThumb.astro";
 import { getBlogPosts } from "@/lib/content";
 import { envFromLocals } from "@/lib/env";
 
@@ -16,41 +17,42 @@ const posts = await getBlogPosts({ includeUnpublished: true }, envFromLocals(Ast
     <a href="/admin/blog/new" class="btn btn-primary">+ new post</a>
   </div>
 
-  <div class="card overflow-x-auto">
-    <table class="admin-table">
-      <thead>
-        <tr><th>Title</th><th>Status</th><th>Published</th><th></th></tr>
-      </thead>
-      <tbody>
-        {
-          posts.length === 0 && (
-            <tr><td colspan="4" class="text-fg-subtle">No posts yet.</td></tr>
-          )
-        }
-        {
-          posts.map((p) => (
-            <tr>
-              <td><a href={`/admin/blog/${p.id}`} class="font-medium text-fg hover:text-accent">{p.title}</a></td>
-              <td>
-                {p.published
-                  ? <span class="status status-live"><span class="status-dot"></span>live</span>
-                  : <span class="tag">draft</span>}
-              </td>
-              <td class="font-mono text-xs text-fg-subtle">{p.publishedAt?.toISOString().slice(0, 10) ?? "—"}</td>
-              <td class="text-right">
-                <div class="flex justify-end gap-3 font-mono text-xs">
-                  <a href={`/admin/blog/${p.id}`} class="text-fg-muted hover:text-accent">edit</a>
-                  <form method="POST" action="/api/admin/blog" onsubmit="return confirm('Delete this post?')">
-                    <input type="hidden" name="_action" value="delete" />
-                    <input type="hidden" name="id" value={p.id} />
-                    <button class="text-fg-muted hover:text-danger" type="submit">delete</button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          ))
-        }
-      </tbody>
-    </table>
-  </div>
+  {
+    posts.length === 0 ? (
+      <p class="font-mono text-sm text-fg-subtle">No posts yet.</p>
+    ) : (
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {posts.map((p) => (
+          <article class="card flex flex-col overflow-hidden p-0">
+            <a href={`/admin/blog/${p.id}`} class="block">
+              <CoverThumb src={p.coverImageUrl} title={p.title} class="rounded-none border-0 border-b border-border" />
+            </a>
+            <div class="flex flex-1 flex-col p-4">
+              <div class="flex items-center justify-between gap-2">
+                {p.published ? (
+                  <span class="status status-live"><span class="status-dot" />live</span>
+                ) : (
+                  <span class="tag">draft</span>
+                )}
+                <span class="font-mono text-xs text-fg-subtle">
+                  {p.publishedAt?.toISOString().slice(0, 10) ?? "—"}
+                </span>
+              </div>
+              <h2 class="mt-2 flex-1 font-display text-base font-semibold leading-snug text-fg">
+                <a href={`/admin/blog/${p.id}`} class="hover:text-accent">{p.title}</a>
+              </h2>
+              <div class="mt-3 flex items-center gap-3 border-t border-border-soft pt-3 font-mono text-xs">
+                <a href={`/admin/blog/${p.id}`} class="text-fg-muted hover:text-accent">edit</a>
+                <form method="POST" action="/api/admin/blog" onsubmit="return confirm('Delete this post?')" class="ml-auto">
+                  <input type="hidden" name="_action" value="delete" />
+                  <input type="hidden" name="id" value={p.id} />
+                  <button class="text-fg-muted hover:text-danger" type="submit">delete</button>
+                </form>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    )
+  }
 </AdminLayout>

@@ -1,0 +1,44 @@
+---
+import CoverThumb from "@/components/CoverThumb.astro";
+import type { BlogPost } from "@/db/schema";
+
+interface Props {
+  post: BlogPost;
+  index?: number;
+}
+const { post, index = 0 } = Astro.props;
+const date = post.publishedAt?.toISOString().slice(0, 10);
+---
+
+<article
+  class="card group reveal flex flex-col overflow-hidden p-0"
+  style={`animation-delay:${Math.min(index, 8) * 60}ms`}
+>
+  <a href={`/blog/${post.slug}`} class="block">
+    <CoverThumb src={post.coverImageUrl} title={post.title} class="rounded-none border-0 border-b border-border" />
+  </a>
+
+  <div class="flex flex-1 flex-col p-5">
+    <span class="font-mono text-xs text-fg-subtle">
+      {date && <>{date} · </>}{post.readingTime} min read
+    </span>
+
+    <h3 class="mt-2 font-display text-lg font-semibold leading-snug text-fg group-hover:text-accent">
+      <a href={`/blog/${post.slug}`}>{post.title}</a>
+    </h3>
+
+    <p class="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-fg-muted">
+      {post.excerpt}
+    </p>
+
+    {
+      post.tags.length > 0 && (
+        <div class="mt-4 flex flex-wrap gap-1.5">
+          {post.tags.slice(0, 4).map((t) => (
+            <span class="tag">{t}</span>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</article>

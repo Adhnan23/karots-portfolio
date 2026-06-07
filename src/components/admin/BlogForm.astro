@@ -28,16 +28,10 @@ const { post: p } = Astro.props;
   </div>
 
   <div>
-    <div class="mb-2 flex items-center justify-between">
-      <span class="field-label mb-0">Body (Markdown)</span>
-      <div class="flex gap-1 font-mono text-xs">
-        <button type="button" class="tab-btn text-accent" data-tab="write">write</button>
-        <span class="text-fg-subtle">/</span>
-        <button type="button" class="tab-btn text-fg-muted" data-tab="preview">preview</button>
-      </div>
-    </div>
-    <textarea class="field font-mono text-sm" id="body" name="body" rows="18">{p?.body ?? ""}</textarea>
-    <div id="preview" class="prose-tech hidden min-h-[20rem] rounded-md border border-border bg-bg-soft p-5"></div>
+    <span class="field-label">Body</span>
+    <div id="editor" class="mt-1"></div>
+    <textarea id="body" name="body" class="hidden">{p?.body ?? ""}</textarea>
+    <p class="field-hint editor-status"></p>
   </div>
 
   <div>
@@ -59,27 +53,58 @@ const { post: p } = Astro.props;
 </form>
 
 <script>
-  import { marked } from "marked";
-  const body = document.getElementById("body") as HTMLTextAreaElement;
-  const preview = document.getElementById("preview")!;
-  const tabs = document.querySelectorAll<HTMLButtonElement>(".tab-btn");
+  import Editor from "@toast-ui/editor";
+  import "@toast-ui/editor/dist/toastui-editor.css";
+  import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
 
-  async function render() {
-    preview.innerHTML = await marked.parse(body.value, { gfm: true });
+  const el = document.getElementById("editor");
+  const bodyField = document.getElementById("body") as HTMLTextAreaElement | null;
+  const statusEl = document.querySelector<HTMLElement>(".editor-status");
+  const form = bodyField?.closest("form");
+
+  function setStatus(msg: string, color: string) {
+    if (statusEl) {
+      statusEl.textContent = msg;
+      statusEl.style.color = color;
+    }
   }
-  tabs.forEach((t) => {
-    t.addEventListener("click", () => {
-      const tab = t.dataset.tab;
-      tabs.forEach((x) => x.classList.toggle("text-accent", x === t));
-      tabs.forEach((x) => x.classList.toggle("text-fg-muted", x !== t));
-      if (tab === "preview") {
-        render();
-        body.classList.add("hidden");
-        preview.classList.remove("hidden");
-      } else {
-        preview.classList.add("hidden");
-        body.classList.remove("hidden");
-      }
+
+  if (el && bodyField && form) {
+    const editor = new Editor({
+      el,
+      height: "560px",
+      initialEditType: "wysiwyg",
+      previewStyle: "vertical",
+      theme: "dark",
+      usageStatistics: false,
+      initialValue: bodyField.value,
+      hooks: {
+        // Upload a pasted/inserted image to /api/admin/upload, then drop the
+        // returned URL in at the cursor as ![alt](url).
+        addImageBlobHook: async (blob, callback) => {
+          const file = blob as File;
+          setStatus("uploading image…", "var(--color-fg-muted)");
+          const fd = new FormData();
+          fd.append("file", file);
+          try {
+            const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+            const data = await res.json();
+            if (res.ok && data.url) {
+              callback(data.url, file.name ?? "image");
+              setStatus("✓ image inserted", "var(--color-online)");
+            } else {
+              setStatus(data.error ?? "image upload failed", "var(--color-danger)");
+            }
+          } catch {
+            setStatus("network error", "var(--color-danger)");
+          }
+        },
+      },
     });
-  });
+
+    // Sync the editor's markdown into the hidden field right before submit.
+    form.addEventListener("submit", () => {
+      bodyField.value = editor.getMarkdown();
+    });
+  }
 </script>

@@ -288,6 +288,27 @@ body::after {
     padding: 0;
     color: inherit;
   }
+  .prose-tech img {
+    display: block;
+    margin-inline: auto;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+  }
+
+  /* Toast UI editor (admin blog form) — nudge the dark theme onto our tokens */
+  .toastui-editor-defaultUI {
+    border-color: var(--color-border) !important;
+    border-radius: var(--radius);
+  }
+  .toastui-editor-defaultUI .toastui-editor-md-tab-container,
+  .toastui-editor-defaultUI .toastui-editor-toolbar {
+    background: var(--color-bg-soft) !important;
+  }
+  .toastui-editor-toolbar-icons {
+    border-color: var(--color-border-soft) !important;
+  }
 
   /* form fields (admin + contact) */
   .field {

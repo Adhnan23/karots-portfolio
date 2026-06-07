@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import BlogCard from "@/components/BlogCard.astro";
 import { getBlogPosts } from "@/lib/content";
 
 const posts = await getBlogPosts();
@@ -21,27 +22,9 @@ const posts = await getBlogPosts();
           <span class="text-accent">$</span> ls posts/ — no entries yet. Check back soon.
         </p>
       ) : (
-        <div class="mt-12 flex flex-col divide-y divide-border border-y border-border">
+        <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post, i) => (
-            <a
-              href={`/blog/${post.slug}`}
-              class="reveal group flex flex-col gap-1 py-6 transition-colors hover:bg-surface/40 md:flex-row md:items-baseline md:gap-6"
-              style={`animation-delay:${i * 60}ms`}
-            >
-              <span class="font-mono text-xs text-fg-subtle md:w-32 md:shrink-0">
-                {post.publishedAt?.toISOString().slice(0, 10)}
-              </span>
-              <div class="md:flex-1">
-                <h2 class="font-display text-xl font-semibold text-fg group-hover:text-accent">
-                  {post.title}
-                </h2>
-                <p class="mt-1 text-sm text-fg-muted">{post.excerpt}</p>
-                <div class="mt-2 flex flex-wrap items-center gap-2">
-                  {post.tags.map((t) => <span class="tag">{t}</span>)}
-                  <span class="font-mono text-xs text-fg-subtle">· {post.readingTime} min read</span>
-                </div>
-              </div>
-            </a>
+            <BlogCard post={post} index={i} />
           ))}
         </div>
       )

@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import SectionHead from "@/components/SectionHead.astro";
 import ProjectCard from "@/components/ProjectCard.astro";
+import BlogCard from "@/components/BlogCard.astro";
 import { getProfile, getProjects, getBlogPosts, getSkillsGrouped } from "@/lib/content";
 import { SITE } from "@/lib/nav";
 
@@ -107,16 +108,8 @@ const dateStr = new Date().toISOString().slice(0, 10);
       <section class="container-page py-16">
         <SectionHead index="03" label="log" title="Recent writing" href="/blog" linkText="all posts" />
         <div class="grid gap-4 md:grid-cols-3">
-          {posts.map((post) => (
-            <a href={`/blog/${post.slug}`} class="card reveal flex flex-col p-5">
-              <span class="font-mono text-xs text-fg-subtle">
-                {post.publishedAt?.toISOString().slice(0, 10)} · {post.readingTime} min
-              </span>
-              <h3 class="mt-2 font-display text-lg font-semibold leading-snug text-fg">
-                {post.title}
-              </h3>
-              <p class="mt-2 line-clamp-3 text-sm text-fg-muted">{post.excerpt}</p>
-            </a>
+          {posts.map((post, i) => (
+            <BlogCard post={post} index={i} />
           ))}
         </div>
       </section>

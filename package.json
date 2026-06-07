@@ -24,6 +24,7 @@
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.3",
     "@neondatabase/serverless": "^1.0.0",
+    "@toast-ui/editor": "^3.2.2",
     "arctic": "^3.7.0",
     "astro": "^5.13.0",
     "drizzle-orm": "^0.44.0",
