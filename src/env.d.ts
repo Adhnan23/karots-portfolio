@@ -12,6 +12,7 @@ interface CloudflareEnv {
   ALLOWED_GITHUB_LOGIN: string;
   CF_DEPLOY_HOOK_URL?: string;
   PUBLIC_SITE_URL?: string;
+  UPLOADTHING_TOKEN?: string;
   R2_PUBLIC_URL?: string;
   R2?: R2Bucket;
 }
@@ -35,6 +36,7 @@ interface ImportMetaEnv {
   readonly ALLOWED_GITHUB_LOGIN?: string;
   readonly CF_DEPLOY_HOOK_URL?: string;
   readonly PUBLIC_SITE_URL?: string;
+  readonly UPLOADTHING_TOKEN?: string;
   readonly R2_PUBLIC_URL?: string;
 }
 interface ImportMeta {

@@ -25,7 +25,8 @@ and locally in `.dev.vars` (gitignored). `.env`/`.env.example` document them too
 | `SESSION_SECRET` | Signs session JWTs | `openssl rand -hex 32` |
 | `PUBLIC_SITE_URL` | Canonical site origin | `https://karots.lk` |
 | `CF_DEPLOY_HOOK_URL` | Triggers a rebuild on Publish | Cloudflare Pages deploy hook (step 5) |
-| `R2_PUBLIC_URL` | Public base URL of the R2 bucket | R2 bucket public domain (step 6) |
+| `UPLOADTHING_TOKEN` | Admin image uploads (preferred) | uploadthing.com dashboard → API Keys |
+| `R2_PUBLIC_URL` | Optional R2 fallback for uploads | R2 bucket public domain (step 6) |
 
 > `SESSION_SECRET`, `GITHUB_CLIENT_SECRET`, `DATABASE_URL`, and `CF_DEPLOY_HOOK_URL`
 > are **secrets** — never commit them. They already live only in gitignored files.
@@ -59,16 +60,23 @@ bun run db:seed        # optional: load initial content (already done once)
    (Settings → Builds & deployments → Deploy hooks) and set its URL as
    `CF_DEPLOY_HOOK_URL`. The admin **Publish** button POSTs to it.
 
-## 6. R2 (image uploads)
+## 6. Image uploads
+
+**Preferred — UploadThing:** set `UPLOADTHING_TOKEN` (from the uploadthing.com
+dashboard) as a Pages **secret**. The admin upload route uses it directly; no
+Cloudflare R2 needed. This is what production currently uses.
+
+**Optional R2 fallback:** if you'd rather use R2, enable R2 in the Cloudflare
+dashboard, then:
 
 ```bash
 wrangler r2 bucket create karots-portfolio-media
 ```
 
-The binding `R2` is already declared in `wrangler.jsonc`. Enable a **public URL**
-(or attach a custom subdomain like `media.karots.lk`) and set `R2_PUBLIC_URL` to that
-base. Until this is set, image upload returns a graceful 501 and you can paste image
-URLs manually.
+Re-enable the `r2_buckets` binding in `wrangler.jsonc`, enable a **public URL** for
+the bucket, and set `R2_PUBLIC_URL`. The upload route prefers UploadThing when its
+token is set, and falls back to R2 otherwise. With neither configured, upload returns
+a graceful 501 and you can paste image URLs manually.
 
 ## 7. Custom domain
 
