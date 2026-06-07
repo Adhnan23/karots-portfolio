@@ -1,0 +1,76 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import { getProfile } from "@/lib/content";
+import { envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+
+const p = await getProfile(envFromLocals(Astro.locals));
+const socialsText = (p?.socials ?? []).map((s) => `${s.label} | ${s.url}`).join("\n");
+---
+
+<AdminLayout title="Profile">
+  <Flash />
+  <form method="POST" action="/api/admin/profile" class="max-w-2xl space-y-5">
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <label class="field-label" for="name">Name</label>
+        <input class="field" id="name" name="name" value={p?.name} required />
+      </div>
+      <div>
+        <label class="field-label" for="title">Title</label>
+        <input class="field" id="title" name="title" value={p?.title} required />
+      </div>
+    </div>
+
+    <div>
+      <label class="field-label" for="tagline">Tagline</label>
+      <input class="field" id="tagline" name="tagline" value={p?.tagline} />
+    </div>
+
+    <div>
+      <label class="field-label" for="summary">Summary</label>
+      <textarea class="field" id="summary" name="summary" rows="4">{p?.summary}</textarea>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <label class="field-label" for="location">Location</label>
+        <input class="field" id="location" name="location" value={p?.location} />
+      </div>
+      <div>
+        <label class="field-label" for="email">Email</label>
+        <input class="field" id="email" name="email" type="email" value={p?.email} />
+      </div>
+      <div>
+        <label class="field-label" for="phone">Phone</label>
+        <input class="field" id="phone" name="phone" value={p?.phone} />
+      </div>
+      <div>
+        <label class="field-label" for="website">Website</label>
+        <input class="field" id="website" name="website" value={p?.website} />
+      </div>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <label class="field-label" for="avatarUrl">Avatar URL</label>
+        <input class="field" id="avatarUrl" name="avatarUrl" value={p?.avatarUrl ?? ""} placeholder="https://…" />
+      </div>
+      <div>
+        <label class="field-label" for="resumeUrl">Resume URL</label>
+        <input class="field" id="resumeUrl" name="resumeUrl" value={p?.resumeUrl ?? ""} placeholder="/cv.pdf" />
+      </div>
+    </div>
+
+    <div>
+      <label class="field-label" for="socials">Socials (one per line: <span class="text-accent">Label | URL</span>)</label>
+      <textarea class="field" id="socials" name="socials" rows="4">{socialsText}</textarea>
+    </div>
+
+    <div class="flex justify-end">
+      <button class="btn btn-primary" type="submit">save profile</button>
+    </div>
+  </form>
+</AdminLayout>

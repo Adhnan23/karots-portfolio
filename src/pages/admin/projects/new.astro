@@ -1,0 +1,12 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import ProjectForm from "@/components/admin/ProjectForm.astro";
+
+export const prerender = false;
+---
+
+<AdminLayout title="New project">
+  <Flash />
+  <ProjectForm />
+</AdminLayout>

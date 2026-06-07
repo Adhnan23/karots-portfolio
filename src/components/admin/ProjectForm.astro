@@ -1,0 +1,106 @@
+---
+import ImageField from "@/components/admin/ImageField.astro";
+import type { Project } from "@/db/schema";
+
+interface Props {
+  project?: Project;
+}
+const { project: p } = Astro.props;
+const categories = ["app", "library", "template", "infra", "experiment", "client"];
+const sources = ["repo", "live", "client", "infra"];
+const demos = ["none", "planned", "live"];
+---
+
+<form method="POST" action="/api/admin/projects" class="max-w-2xl space-y-5">
+  {p && <input type="hidden" name="id" value={p.id} />}
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <label class="field-label" for="title">Title</label>
+      <input class="field" id="title" name="title" value={p?.title ?? ""} required />
+    </div>
+    <div>
+      <label class="field-label" for="slug">Slug</label>
+      <input class="field" id="slug" name="slug" value={p?.slug ?? ""} placeholder="auto from title" />
+    </div>
+  </div>
+
+  <div>
+    <label class="field-label" for="summary">Summary</label>
+    <input class="field" id="summary" name="summary" value={p?.summary ?? ""} />
+  </div>
+
+  <div>
+    <label class="field-label" for="description">Description (Markdown)</label>
+    <textarea class="field font-mono text-sm" id="description" name="description" rows="10">{p?.description ?? ""}</textarea>
+  </div>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <label class="field-label" for="tech">Tech (comma-separated)</label>
+      <input class="field" id="tech" name="tech" value={p?.tech.join(", ") ?? ""} />
+    </div>
+    <div>
+      <label class="field-label" for="role">Role</label>
+      <input class="field" id="role" name="role" value={p?.role ?? ""} />
+    </div>
+  </div>
+
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div>
+      <label class="field-label" for="category">Category</label>
+      <select class="field" id="category" name="category">
+        {categories.map((c) => <option value={c} selected={p?.category === c}>{c}</option>)}
+      </select>
+    </div>
+    <div>
+      <label class="field-label" for="source">Source</label>
+      <select class="field" id="source" name="source">
+        {sources.map((s) => <option value={s} selected={p?.source === s}>{s}</option>)}
+      </select>
+    </div>
+    <div>
+      <label class="field-label" for="demoStatus">Demo status</label>
+      <select class="field" id="demoStatus" name="demoStatus">
+        {demos.map((d) => <option value={d} selected={p?.demoStatus === d}>{d}</option>)}
+      </select>
+    </div>
+  </div>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <label class="field-label" for="repoUrl">Repo URL</label>
+      <input class="field" id="repoUrl" name="repoUrl" value={p?.repoUrl ?? ""} placeholder="https://github.com/…" />
+    </div>
+    <div>
+      <label class="field-label" for="liveUrl">Live URL</label>
+      <input class="field" id="liveUrl" name="liveUrl" value={p?.liveUrl ?? ""} placeholder="https://…" />
+    </div>
+  </div>
+
+  <ImageField name="coverImageUrl" label="Cover image" value={p?.coverImageUrl ?? ""} />
+
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div>
+      <label class="field-label" for="dateRange">Date / range</label>
+      <input class="field" id="dateRange" name="dateRange" value={p?.dateRange ?? ""} placeholder="2026" />
+    </div>
+    <div>
+      <label class="field-label" for="sort">Sort</label>
+      <input class="field" id="sort" name="sort" type="number" value={p?.sort ?? 0} />
+    </div>
+    <div class="flex items-end gap-5 pb-2">
+      <label class="flex items-center gap-2 font-mono text-sm text-fg-muted">
+        <input type="checkbox" name="featured" checked={p?.featured} /> featured
+      </label>
+      <label class="flex items-center gap-2 font-mono text-sm text-fg-muted">
+        <input type="checkbox" name="published" checked={p ? p.published : true} /> published
+      </label>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between border-t border-border pt-5">
+    <a href="/admin/projects" class="btn btn-ghost">cancel</a>
+    <button class="btn btn-primary" type="submit">{p ? "save changes" : "create project"}</button>
+  </div>
+</form>

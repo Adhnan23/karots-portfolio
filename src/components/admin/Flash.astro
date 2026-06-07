@@ -1,0 +1,19 @@
+---
+const saved = Astro.url.searchParams.has("saved");
+const error = Astro.url.searchParams.get("error");
+---
+
+{
+  saved && (
+    <div class="mb-5 rounded-md border px-4 py-2.5 font-mono text-sm" style="border-color:color-mix(in srgb,var(--color-online) 40%,transparent);background:color-mix(in srgb,var(--color-online) 10%,transparent);color:var(--color-online)">
+      ✓ Saved.
+    </div>
+  )
+}
+{
+  error && (
+    <div class="mb-5 rounded-md border px-4 py-2.5 font-mono text-sm" style="border-color:color-mix(in srgb,var(--color-danger) 40%,transparent);background:color-mix(in srgb,var(--color-danger) 10%,transparent);color:var(--color-danger)">
+      ✗ Something went wrong. {error !== "1" && error}
+    </div>
+  )
+}

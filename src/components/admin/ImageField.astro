@@ -1,0 +1,67 @@
+---
+interface Props {
+  name: string;
+  label: string;
+  value?: string;
+}
+const { name, label, value = "" } = Astro.props;
+const id = `img-${name}`;
+---
+
+<div class="image-field" data-field={name}>
+  <label class="field-label" for={id}>{label}</label>
+  <div class="flex gap-2">
+    <input class="field img-url" id={id} name={name} value={value} placeholder="https://… or upload →" />
+    <label class="btn btn-ghost shrink-0 cursor-pointer">
+      ↑ upload
+      <input type="file" accept="image/*,application/pdf" class="img-file hidden" />
+    </label>
+  </div>
+  <p class="field-hint img-status"></p>
+  {value && <img src={value} alt="" class="img-preview mt-2 max-h-28 rounded border border-border" />}
+  {!value && <img src="" alt="" class="img-preview mt-2 hidden max-h-28 rounded border border-border" />}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>(".image-field").forEach((field) => {
+    const url = field.querySelector<HTMLInputElement>(".img-url")!;
+    const file = field.querySelector<HTMLInputElement>(".img-file")!;
+    const status = field.querySelector<HTMLElement>(".img-status")!;
+    const preview = field.querySelector<HTMLImageElement>(".img-preview")!;
+
+    function showPreview(src: string) {
+      if (src) {
+        preview.src = src;
+        preview.classList.remove("hidden");
+      } else {
+        preview.classList.add("hidden");
+      }
+    }
+    url.addEventListener("change", () => showPreview(url.value));
+
+    file.addEventListener("change", async () => {
+      const f = file.files?.[0];
+      if (!f) return;
+      status.textContent = "uploading…";
+      status.style.color = "var(--color-fg-muted)";
+      const fd = new FormData();
+      fd.append("file", f);
+      try {
+        const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+        const body = await res.json();
+        if (res.ok && body.url) {
+          url.value = body.url;
+          showPreview(body.url);
+          status.textContent = "✓ uploaded";
+          status.style.color = "var(--color-online)";
+        } else {
+          status.textContent = body.error ?? "upload failed";
+          status.style.color = "var(--color-danger)";
+        }
+      } catch {
+        status.textContent = "network error";
+        status.style.color = "var(--color-danger)";
+      }
+    });
+  });
+</script>

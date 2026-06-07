@@ -1,0 +1,12 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import BlogForm from "@/components/admin/BlogForm.astro";
+
+export const prerender = false;
+---
+
+<AdminLayout title="New post">
+  <Flash />
+  <BlogForm />
+</AdminLayout>

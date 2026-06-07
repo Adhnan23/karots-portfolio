@@ -1,0 +1,55 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import { getProjects } from "@/lib/content";
+import { envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+
+const projects = await getProjects({ includeUnpublished: true }, envFromLocals(Astro.locals));
+---
+
+<AdminLayout title="Projects">
+  <Flash />
+  <div class="mb-5 flex items-center justify-between">
+    <p class="font-mono text-sm text-fg-muted">{projects.length} projects</p>
+    <a href="/admin/projects/new" class="btn btn-primary">+ new project</a>
+  </div>
+
+  <div class="card overflow-x-auto">
+    <table class="admin-table">
+      <thead>
+        <tr><th>Title</th><th>Category</th><th>Status</th><th>Sort</th><th></th></tr>
+      </thead>
+      <tbody>
+        {
+          projects.map((p) => (
+            <tr>
+              <td>
+                <a href={`/admin/projects/${p.id}`} class="font-medium text-fg hover:text-accent">{p.title}</a>
+                {p.featured && <span class="ml-2 text-accent" title="featured">★</span>}
+              </td>
+              <td class="font-mono text-xs text-fg-muted">{p.category}</td>
+              <td>
+                {p.published
+                  ? <span class="status status-live"><span class="status-dot"></span>live</span>
+                  : <span class="tag">draft</span>}
+              </td>
+              <td class="font-mono text-xs text-fg-subtle">{p.sort}</td>
+              <td class="text-right">
+                <div class="flex justify-end gap-3 font-mono text-xs">
+                  <a href={`/admin/projects/${p.id}`} class="text-fg-muted hover:text-accent">edit</a>
+                  <form method="POST" action="/api/admin/projects" onsubmit="return confirm('Delete this project?')">
+                    <input type="hidden" name="_action" value="delete" />
+                    <input type="hidden" name="id" value={p.id} />
+                    <button class="text-fg-muted hover:text-danger" style="--tw-text-opacity:1" type="submit">delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>

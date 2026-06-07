@@ -1,0 +1,73 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import { getExperiences } from "@/lib/content";
+import { envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+const items = await getExperiences(envFromLocals(Astro.locals));
+---
+
+<AdminLayout title="Experience">
+  <Flash />
+
+  <!-- Add new -->
+  <details class="card mb-6 p-5">
+    <summary class="cursor-pointer font-mono text-sm text-accent">+ add experience</summary>
+    <form method="POST" action="/api/admin/experience" class="mt-4 space-y-4">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div><label class="field-label">Role</label><input class="field" name="role" required /></div>
+        <div><label class="field-label">Company</label><input class="field" name="company" required /></div>
+        <div><label class="field-label">Location</label><input class="field" name="location" /></div>
+        <div><label class="field-label">Type</label>
+          <select class="field" name="type"><option value="work">work</option><option value="other">other</option></select>
+        </div>
+        <div><label class="field-label">Start</label><input class="field" name="startDate" placeholder="Feb 2025" required /></div>
+        <div><label class="field-label">End (blank = present)</label><input class="field" name="endDate" placeholder="Jul 2025" /></div>
+      </div>
+      <div><label class="field-label">Description (Markdown bullets)</label><textarea class="field font-mono text-sm" name="description" rows="5"></textarea></div>
+      <div class="flex items-center justify-between">
+        <input class="field w-24" name="sort" type="number" value="0" title="sort" />
+        <button class="btn btn-primary" type="submit">add</button>
+      </div>
+    </form>
+  </details>
+
+  <!-- Existing -->
+  <div class="space-y-3">
+    {
+      items.map((e) => (
+        <details class="card p-5">
+          <summary class="flex cursor-pointer items-center justify-between">
+            <span class="font-medium text-fg">{e.role} <span class="font-mono text-xs text-fg-muted">· {e.company}</span></span>
+            <span class="font-mono text-xs text-fg-subtle">{e.startDate} – {e.endDate ?? "present"}</span>
+          </summary>
+          <form method="POST" action="/api/admin/experience" class="mt-4 space-y-4">
+            <input type="hidden" name="id" value={e.id} />
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div><label class="field-label">Role</label><input class="field" name="role" value={e.role} required /></div>
+              <div><label class="field-label">Company</label><input class="field" name="company" value={e.company} required /></div>
+              <div><label class="field-label">Location</label><input class="field" name="location" value={e.location} /></div>
+              <div><label class="field-label">Type</label>
+                <select class="field" name="type">
+                  <option value="work" selected={e.type === "work"}>work</option>
+                  <option value="other" selected={e.type === "other"}>other</option>
+                </select>
+              </div>
+              <div><label class="field-label">Start</label><input class="field" name="startDate" value={e.startDate} required /></div>
+              <div><label class="field-label">End</label><input class="field" name="endDate" value={e.endDate ?? ""} /></div>
+            </div>
+            <div><label class="field-label">Description</label><textarea class="field font-mono text-sm" name="description" rows="5">{e.description}</textarea></div>
+            <div class="flex items-center justify-between">
+              <input class="field w-24" name="sort" type="number" value={e.sort} />
+              <div class="flex gap-3">
+                <button class="btn btn-primary" name="_action" value="save" type="submit">save</button>
+                <button class="btn btn-ghost" name="_action" value="delete" type="submit" onclick="return confirm('Delete?')">delete</button>
+              </div>
+            </div>
+          </form>
+        </details>
+      ))
+    }
+  </div>
+</AdminLayout>

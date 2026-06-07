@@ -1,0 +1,85 @@
+---
+import ImageField from "@/components/admin/ImageField.astro";
+import type { BlogPost } from "@/db/schema";
+
+interface Props {
+  post?: BlogPost;
+}
+const { post: p } = Astro.props;
+---
+
+<form method="POST" action="/api/admin/blog" class="max-w-3xl space-y-5">
+  {p && <input type="hidden" name="id" value={p.id} />}
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <label class="field-label" for="title">Title</label>
+      <input class="field" id="title" name="title" value={p?.title ?? ""} required />
+    </div>
+    <div>
+      <label class="field-label" for="slug">Slug</label>
+      <input class="field" id="slug" name="slug" value={p?.slug ?? ""} placeholder="auto from title" />
+    </div>
+  </div>
+
+  <div>
+    <label class="field-label" for="excerpt">Excerpt</label>
+    <textarea class="field" id="excerpt" name="excerpt" rows="2">{p?.excerpt ?? ""}</textarea>
+  </div>
+
+  <div>
+    <div class="mb-2 flex items-center justify-between">
+      <span class="field-label mb-0">Body (Markdown)</span>
+      <div class="flex gap-1 font-mono text-xs">
+        <button type="button" class="tab-btn text-accent" data-tab="write">write</button>
+        <span class="text-fg-subtle">/</span>
+        <button type="button" class="tab-btn text-fg-muted" data-tab="preview">preview</button>
+      </div>
+    </div>
+    <textarea class="field font-mono text-sm" id="body" name="body" rows="18">{p?.body ?? ""}</textarea>
+    <div id="preview" class="prose-tech hidden min-h-[20rem] rounded-md border border-border bg-bg-soft p-5"></div>
+  </div>
+
+  <div>
+    <label class="field-label" for="tags">Tags (comma-separated)</label>
+    <input class="field" id="tags" name="tags" value={p?.tags.join(", ") ?? ""} />
+  </div>
+
+  <ImageField name="coverImageUrl" label="Cover image" value={p?.coverImageUrl ?? ""} />
+
+  <div class="flex items-center justify-between border-t border-border pt-5">
+    <label class="flex items-center gap-2 font-mono text-sm text-fg-muted">
+      <input type="checkbox" name="published" checked={p?.published} /> published
+    </label>
+    <div class="flex gap-3">
+      <a href="/admin/blog" class="btn btn-ghost">cancel</a>
+      <button class="btn btn-primary" type="submit">{p ? "save changes" : "create post"}</button>
+    </div>
+  </div>
+</form>
+
+<script>
+  import { marked } from "marked";
+  const body = document.getElementById("body") as HTMLTextAreaElement;
+  const preview = document.getElementById("preview")!;
+  const tabs = document.querySelectorAll<HTMLButtonElement>(".tab-btn");
+
+  async function render() {
+    preview.innerHTML = await marked.parse(body.value, { gfm: true });
+  }
+  tabs.forEach((t) => {
+    t.addEventListener("click", () => {
+      const tab = t.dataset.tab;
+      tabs.forEach((x) => x.classList.toggle("text-accent", x === t));
+      tabs.forEach((x) => x.classList.toggle("text-fg-muted", x !== t));
+      if (tab === "preview") {
+        render();
+        body.classList.add("hidden");
+        preview.classList.remove("hidden");
+      } else {
+        preview.classList.add("hidden");
+        body.classList.remove("hidden");
+      }
+    });
+  });
+</script>

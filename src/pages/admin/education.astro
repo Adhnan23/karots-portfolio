@@ -1,0 +1,54 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import { getEducation } from "@/lib/content";
+import { envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+const items = await getEducation(envFromLocals(Astro.locals));
+---
+
+<AdminLayout title="Education">
+  <Flash />
+
+  <details class="card mb-6 p-5">
+    <summary class="cursor-pointer font-mono text-sm text-accent">+ add education</summary>
+    <form method="POST" action="/api/admin/education" class="mt-4 space-y-4">
+      <div><label class="field-label">Qualification</label><input class="field" name="qualification" required /></div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div><label class="field-label">Institution</label><input class="field" name="institution" required /></div>
+        <div><label class="field-label">Result</label><input class="field" name="result" placeholder="Distinction · Rank 1" /></div>
+        <div><label class="field-label">Year</label><input class="field" name="year" /></div>
+        <div><label class="field-label">Sort</label><input class="field" name="sort" type="number" value="0" /></div>
+      </div>
+      <div class="flex justify-end"><button class="btn btn-primary" type="submit">add</button></div>
+    </form>
+  </details>
+
+  <div class="space-y-3">
+    {
+      items.map((ed) => (
+        <details class="card p-5">
+          <summary class="flex cursor-pointer items-center justify-between">
+            <span class="font-medium text-fg">{ed.qualification}</span>
+            <span class="font-mono text-xs text-fg-subtle">{ed.year}</span>
+          </summary>
+          <form method="POST" action="/api/admin/education" class="mt-4 space-y-4">
+            <input type="hidden" name="id" value={ed.id} />
+            <div><label class="field-label">Qualification</label><input class="field" name="qualification" value={ed.qualification} required /></div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div><label class="field-label">Institution</label><input class="field" name="institution" value={ed.institution} required /></div>
+              <div><label class="field-label">Result</label><input class="field" name="result" value={ed.result} /></div>
+              <div><label class="field-label">Year</label><input class="field" name="year" value={ed.year} /></div>
+              <div><label class="field-label">Sort</label><input class="field" name="sort" type="number" value={ed.sort} /></div>
+            </div>
+            <div class="flex justify-end gap-3">
+              <button class="btn btn-primary" name="_action" value="save" type="submit">save</button>
+              <button class="btn btn-ghost" name="_action" value="delete" type="submit" onclick="return confirm('Delete?')">delete</button>
+            </div>
+          </form>
+        </details>
+      ))
+    }
+  </div>
+</AdminLayout>

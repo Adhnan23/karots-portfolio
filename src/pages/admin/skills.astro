@@ -1,0 +1,57 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import { getDb } from "@/db";
+import { skills } from "@/db/schema";
+import { asc } from "drizzle-orm";
+import { envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+const db = getDb(envFromLocals(Astro.locals));
+const items = await db.select().from(skills).orderBy(asc(skills.sort));
+const categories = [...new Set(items.map((s) => s.category))];
+---
+
+<AdminLayout title="Skills">
+  <Flash />
+
+  <details class="card mb-6 p-5">
+    <summary class="cursor-pointer font-mono text-sm text-accent">+ add skill</summary>
+    <form method="POST" action="/api/admin/skills" class="mt-4 grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto_auto]">
+      <div>
+        <label class="field-label">Category</label>
+        <input class="field" name="category" list="cats" required />
+        <datalist id="cats">{categories.map((c) => <option value={c} />)}</datalist>
+      </div>
+      <div><label class="field-label">Name</label><input class="field" name="name" required /></div>
+      <div><label class="field-label">Sort</label><input class="field w-20" name="sort" type="number" value="0" /></div>
+      <button class="btn btn-primary" type="submit">add</button>
+    </form>
+  </details>
+
+  <div class="card overflow-x-auto">
+    <table class="admin-table">
+      <thead><tr><th>Category</th><th>Name</th><th>Sort</th><th></th></tr></thead>
+      <tbody>
+        {
+          items.map((s) => (
+            <tr>
+              <td colspan="4" class="!p-0">
+                <form method="POST" action="/api/admin/skills" class="grid items-center gap-2 px-3 py-2 sm:grid-cols-[1fr_1fr_5rem_auto]">
+                  <input type="hidden" name="id" value={s.id} />
+                  <input class="field" name="category" value={s.category} />
+                  <input class="field" name="name" value={s.name} />
+                  <input class="field" name="sort" type="number" value={s.sort} />
+                  <div class="flex gap-2 font-mono text-xs">
+                    <button class="text-fg-muted hover:text-accent" name="_action" value="save" type="submit">save</button>
+                    <button class="text-fg-muted hover:text-danger" name="_action" value="delete" type="submit" onclick="return confirm('Delete?')">del</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
