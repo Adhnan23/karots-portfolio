@@ -4,12 +4,15 @@
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "./dist",
-  // R2 bucket for admin image uploads. Create with:
+  // Non-secret runtime vars. Kept here so `wrangler pages deploy` preserves them
+  // (plain-text vars not in config get wiped on deploy). Secrets (DATABASE_URL,
+  // GITHUB_CLIENT_SECRET, SESSION_SECRET) are set as Pages secrets, not here.
+  "vars": {
+    "GITHUB_CLIENT_ID": "Ov23liERwZevopnXZ9bB",
+    "ALLOWED_GITHUB_LOGIN": "Adhnan23",
+    "PUBLIC_SITE_URL": "https://karots.lk"
+  }
+  // R2 bucket for admin image uploads — re-enable once R2 is active on the account:
   //   wrangler r2 bucket create karots-portfolio-media
-  "r2_buckets": [
-    {
-      "binding": "R2",
-      "bucket_name": "karots-portfolio-media"
-    }
-  ]
+  // "r2_buckets": [{ "binding": "R2", "bucket_name": "karots-portfolio-media" }]
 }
