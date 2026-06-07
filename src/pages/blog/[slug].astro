@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getBlogPosts, getBlogPostBySlug } from "@/lib/content";
 import { renderMarkdown } from "@/lib/markdown";
+import { SITE } from "@/lib/nav";
 
 export async function getStaticPaths() {
   const posts = await getBlogPosts();
@@ -14,9 +15,41 @@ if (!post) return Astro.redirect("/404");
 
 const body = await renderMarkdown(post.body);
 const date = post.publishedAt?.toISOString().slice(0, 10);
+
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const publishedISO = post.publishedAt?.toISOString();
+const modifiedISO = post.updatedAt?.toISOString() ?? publishedISO;
+const canonical = new URL(`/blog/${post.slug}/`, origin).href;
+
+const blogPostingLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.title,
+  description: post.excerpt,
+  datePublished: publishedISO,
+  dateModified: modifiedISO,
+  author: { "@type": "Person", name: SITE.name, url: origin.href },
+  publisher: { "@type": "Person", name: SITE.name, url: origin.href },
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
+  url: canonical,
+  keywords: post.tags.join(", "),
+  ...(post.coverImageUrl ? { image: new URL(post.coverImageUrl, origin).href } : {}),
+  wordCount: post.body.trim().split(/\s+/).length,
+  timeRequired: `PT${post.readingTime}M`,
+  inLanguage: "en",
+};
 ---
 
-<BaseLayout title={`${post.title} — Blog`} description={post.excerpt} image={post.coverImageUrl ?? undefined}>
+<BaseLayout
+  title={`${post.title} — Blog`}
+  description={post.excerpt}
+  image={post.coverImageUrl ?? undefined}
+  type="article"
+  publishedTime={publishedISO}
+  modifiedTime={modifiedISO}
+  tags={post.tags}
+  jsonLd={blogPostingLd}
+>
   <article class="container-page py-12 md:py-16">
     <a href="/blog" class="font-mono text-sm text-fg-muted hover:text-accent">← all posts</a>
 

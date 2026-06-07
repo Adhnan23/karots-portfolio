@@ -2,12 +2,22 @@
 import "@/styles/global.css";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import { SITE, DEFAULT_KEYWORDS } from "@/lib/nav";
 
 interface Props {
   title?: string;
   description?: string;
   image?: string;
   noindex?: boolean;
+  /** "website" (default) or "article" for blog posts. */
+  type?: "website" | "article";
+  keywords?: string;
+  /** Article metadata (only used when type === "article"). */
+  publishedTime?: string;
+  modifiedTime?: string;
+  tags?: string[];
+  /** Extra JSON-LD object(s) to embed (e.g. BlogPosting, BreadcrumbList). */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
@@ -15,9 +25,38 @@ const {
   description = "Backend-focused full-stack developer with hands-on DevOps experience running self-hosted production infrastructure. Projects, writing, and contact.",
   image = "/og.png",
   noindex = false,
+  type = "website",
+  keywords = DEFAULT_KEYWORDS,
+  publishedTime,
+  modifiedTime,
+  tags = [],
+  jsonLd,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const canonical = new URL(Astro.url.pathname, origin).href;
+const imageUrl = new URL(image, origin).href;
+
+// Person + WebSite structured data shipped on every public page.
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: SITE.name,
+  url: origin.href,
+  email: `mailto:${SITE.email}`,
+  jobTitle: SITE.role,
+  sameAs: SITE.sameAs,
+  knowsAbout: SITE.knowsAbout,
+};
+const siteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE.name,
+  url: origin.href,
+  inLanguage: "en",
+};
+const extraLd = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const structuredData = noindex ? extraLd : [personLd, siteLd, ...extraLd];
 ---
 
 <!doctype html>
@@ -28,16 +67,53 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).hr
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <meta name="author" content={SITE.name} />
+    <meta name="theme-color" content="#0b0b0d" />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="alternate" type="application/rss+xml" title="Mohammed Sheik Adhnan — Writing" href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta
+      name="robots"
+      content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"}
+    />
 
-    <!-- Open Graph / Twitter -->
-    <meta property="og:type" content="website" />
+    <!-- Open Graph -->
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content={SITE.locale} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL(image, Astro.site ?? Astro.url.origin).href} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title} />
+    {
+      type === "article" && (
+        <>
+          {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+          {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+          <meta property="article:author" content={SITE.name} />
+          {tags.map((t) => <meta property="article:tag" content={t} />)}
+        </>
+      )
+    }
+
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content={SITE.twitter} />
+    <meta name="twitter:creator" content={SITE.twitter} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+
+    <!-- Structured data -->
+    {
+      structuredData.map((data) => (
+        <script type="application/ld+json" set:html={JSON.stringify(data)} />
+      ))
+    }
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

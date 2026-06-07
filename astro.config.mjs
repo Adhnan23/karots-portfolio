@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
+import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 
 // Public pages are prerendered (static) by default; admin + API routes opt into
@@ -13,6 +14,12 @@ export default defineConfig({
     platformProxy: { enabled: true },
     imageService: "compile",
   }),
+  integrations: [
+    // Exclude private/SSR routes from the public sitemap.
+    sitemap({
+      filter: (page) => !page.includes("/admin") && !page.includes("/resume"),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },

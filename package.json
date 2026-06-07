@@ -16,20 +16,23 @@
     "db:seed": "bun run scripts/seed.ts",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
-    "cv:pdf": "bun run scripts/generate-cv.ts"
+    "cv:pdf": "bun run scripts/generate-cv.ts",
+    "og:image": "bun run scripts/generate-og.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.0",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.3",
+    "@neondatabase/serverless": "^1.0.0",
+    "arctic": "^3.7.0",
     "astro": "^5.13.0",
     "drizzle-orm": "^0.44.0",
-    "@neondatabase/serverless": "^1.0.0",
-    "pg": "^8.13.0",
-    "arctic": "^3.7.0",
     "jose": "^6.0.0",
-    "zod": "^3.24.0",
     "marked": "^15.0.0",
+    "pg": "^8.13.0",
+    "sanitize-html": "^2.14.0",
     "shiki": "^3.0.0",
-    "sanitize-html": "^2.14.0"
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",
