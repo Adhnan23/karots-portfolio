@@ -1,0 +1,113 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SectionHead from "@/components/SectionHead.astro";
+import { getProfile, getExperiences, getEducation, getSkillsGrouped } from "@/lib/content";
+import { renderMarkdown } from "@/lib/markdown";
+import { SITE } from "@/lib/nav";
+
+const profile = await getProfile();
+const experiences = await getExperiences();
+const education = await getEducation();
+const skills = await getSkillsGrouped();
+
+const expRendered = await Promise.all(
+  experiences.map(async (e) => ({ ...e, html: await renderMarkdown(e.description) }))
+);
+const work = expRendered.filter((e) => e.type === "work");
+const other = expRendered.filter((e) => e.type === "other");
+---
+
+<BaseLayout title="About — Mohammed Sheik Adhnan" description={profile?.summary}>
+  <section class="container-page py-16 md:py-20">
+    <p class="mono-label reveal">// about</p>
+    <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-bold leading-tight md:text-5xl" style="animation-delay:60ms">
+      {profile?.summary?.split(".")[0]}.
+    </h1>
+    <p class="reveal mt-6 max-w-2xl leading-relaxed text-fg-muted" style="animation-delay:120ms">
+      {profile?.summary?.split(".").slice(1).join(".").trim()}
+    </p>
+    <div class="reveal mt-8 flex flex-wrap gap-3" style="animation-delay:180ms">
+      <a href="/resume" class="btn btn-primary">view resume</a>
+      <a href={`mailto:${profile?.email ?? SITE.email}`} class="btn btn-ghost">email me</a>
+    </div>
+  </section>
+
+  <!-- Experience -->
+  <section class="container-page py-12">
+    <SectionHead index="01" label="career" title="Experience" />
+    <div class="flex flex-col gap-10">
+      {
+        work.map((e) => (
+          <div class="reveal grid gap-2 md:grid-cols-[180px_1fr]">
+            <div class="font-mono text-sm text-fg-subtle">
+              {e.startDate} — {e.endDate ?? <span class="text-online">present</span>}
+            </div>
+            <div>
+              <h3 class="font-display text-xl font-semibold text-fg">{e.role}</h3>
+              <p class="mt-0.5 font-mono text-sm text-accent">
+                {e.company}{e.location && <span class="text-fg-subtle"> · {e.location}</span>}
+              </p>
+              <div class="prose-tech mt-3 text-sm" set:html={e.html} />
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Education + Other -->
+  <section class="container-page py-12">
+    <div class="grid gap-12 md:grid-cols-2">
+      <div>
+        <SectionHead index="02" label="education" title="Education" />
+        <div class="flex flex-col gap-6">
+          {
+            education.map((ed) => (
+              <div class="reveal">
+                <h3 class="font-display text-lg font-semibold text-fg">{ed.qualification}</h3>
+                <p class="mt-0.5 font-mono text-sm text-accent">{ed.institution}</p>
+                <p class="mt-1 font-mono text-xs text-fg-subtle">
+                  {ed.result}{ed.result && ed.year && " · "}{ed.year}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div>
+        <SectionHead index="03" label="misc" title="Also" />
+        <div class="flex flex-col gap-6">
+          {
+            other.map((e) => (
+              <div class="reveal">
+                <h3 class="font-display text-lg font-semibold text-fg">{e.role}</h3>
+                <p class="mt-0.5 font-mono text-sm text-fg-subtle">
+                  {e.startDate} — {e.endDate}
+                </p>
+                <div class="prose-tech mt-2 text-sm" set:html={e.html} />
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills -->
+  <section class="container-page py-12 pb-20">
+    <SectionHead index="04" label="stack" title="Skills" />
+    <div class="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        skills.map((g) => (
+          <div class="reveal">
+            <h3 class="mono-label mb-3">{g.category}</h3>
+            <ul class="flex flex-wrap gap-1.5">
+              {g.items.map((s) => <li class="tag">{s.name}</li>)}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

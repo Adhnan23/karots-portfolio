@@ -1,0 +1,91 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getProjects, getProjectBySlug } from "@/lib/content";
+import { renderMarkdown } from "@/lib/markdown";
+import { projectLinks, sourceLabel, categoryLabel, isLive } from "@/lib/project-display";
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const project = await getProjectBySlug(slug!);
+if (!project) return Astro.redirect("/404");
+
+const body = await renderMarkdown(project.description);
+const links = projectLinks(project);
+const live = isLive(project);
+const src = sourceLabel(project);
+---
+
+<BaseLayout title={`${project.title} — Project`} description={project.summary}>
+  <article class="container-page py-12 md:py-16">
+    <a href="/projects" class="font-mono text-sm text-fg-muted hover:text-accent">← all projects</a>
+
+    <header class="mt-6 border-b border-border pb-8">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="tag">{categoryLabel(project.category)}</span>
+        {live && <span class="status status-live"><span class="status-dot"></span>live</span>}
+        <span class="font-mono text-xs text-fg-subtle">{project.dateRange}</span>
+      </div>
+      <h1 class="mt-4 font-display text-4xl font-bold md:text-5xl">{project.title}</h1>
+      <p class="mt-4 max-w-2xl text-lg text-fg-muted">{project.summary}</p>
+    </header>
+
+    <div class="mt-10 grid gap-12 md:grid-cols-[1fr_240px]">
+      <!-- Body -->
+      <div class="prose-tech order-2 md:order-1" set:html={body} />
+
+      <!-- Meta sidebar -->
+      <aside class="order-1 flex flex-col gap-6 md:order-2">
+        {
+          links.length > 0 && (
+            <div>
+              <h3 class="mono-label mb-2">links</h3>
+              <div class="flex flex-col gap-2">
+                {links.map((l) => (
+                  <a href={l.href} target="_blank" rel="noopener" class="btn btn-ghost justify-start">
+                    {l.kind === "live" ? "↗ visit live" : "<> view source"}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )
+        }
+        {
+          src && links.length === 0 && (
+            <div>
+              <h3 class="mono-label mb-2">availability</h3>
+              <p class="text-sm text-fg-muted">{src}</p>
+            </div>
+          )
+        }
+        {
+          project.role && (
+            <div>
+              <h3 class="mono-label mb-2">role</h3>
+              <p class="text-sm text-fg-muted">{project.role}</p>
+            </div>
+          )
+        }
+        <div>
+          <h3 class="mono-label mb-2">stack</h3>
+          <ul class="flex flex-wrap gap-1.5">
+            {project.tech.map((t) => <li class="tag">{t}</li>)}
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    {
+      project.gallery.length > 0 && (
+        <div class="mt-12 grid gap-4 sm:grid-cols-2">
+          {project.gallery.map((g) => (
+            <img src={g.url} alt={g.alt ?? project.title} loading="lazy" class="card w-full" />
+          ))}
+        </div>
+      )
+    }
+  </article>
+</BaseLayout>

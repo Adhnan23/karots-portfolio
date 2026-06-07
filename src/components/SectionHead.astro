@@ -1,0 +1,22 @@
+---
+interface Props {
+  index: string; // "01"
+  label: string; // "projects"
+  title: string;
+  href?: string;
+  linkText?: string;
+}
+const { index, label, title, href, linkText } = Astro.props;
+---
+
+<div class="section-head">
+  <span class="mono-label whitespace-nowrap">{index} / {label}</span>
+  <h2 class="font-display text-2xl font-semibold text-fg md:text-3xl">{title}</h2>
+  {
+    href && (
+      <a href={href} class="ml-auto self-center font-mono text-sm text-fg-muted hover:text-accent">
+        {linkText ?? "view all"} →
+      </a>
+    )
+  }
+</div>

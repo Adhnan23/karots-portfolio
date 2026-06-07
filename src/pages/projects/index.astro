@@ -1,0 +1,72 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import ProjectCard from "@/components/ProjectCard.astro";
+import { getProjects } from "@/lib/content";
+import { categoryLabel } from "@/lib/project-display";
+
+const projects = await getProjects();
+const categories = ["all", ...new Set(projects.map((p) => p.category))];
+const liveCount = projects.filter((p) => p.demoStatus === "live" || p.liveUrl).length;
+---
+
+<BaseLayout title="Projects — Mohammed Sheik Adhnan" description="Selected backend, full-stack, and infrastructure projects.">
+  <section class="container-page py-16 md:py-20">
+    <p class="mono-label reveal">// projects</p>
+    <h1 class="reveal mt-3 font-display text-4xl font-bold md:text-5xl" style="animation-delay:60ms">
+      Things I've built &amp; shipped
+    </h1>
+    <p class="reveal mt-4 max-w-2xl text-fg-muted" style="animation-delay:120ms">
+      {projects.length} projects — from production apps and open-source libraries to
+      client work and the infrastructure it all runs on.
+      <span class="text-fg-subtle">({liveCount} live)</span>
+    </p>
+
+    <!-- Filters -->
+    <div class="reveal mt-8 flex flex-wrap gap-2" style="animation-delay:180ms" id="filters">
+      {
+        categories.map((c) => (
+          <button
+            class="filter-btn btn btn-ghost text-xs"
+            data-filter={c}
+            data-active={c === "all"}
+          >
+            {c === "all" ? "all" : categoryLabel(c).toLowerCase()}
+          </button>
+        ))
+      }
+    </div>
+
+    <!-- Grid -->
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" id="project-grid">
+      {
+        projects.map((p, i) => (
+          <div class="project-item" data-category={p.category}>
+            <ProjectCard project={p} index={i} />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .filter-btn[data-active="true"] {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+</style>
+
+<script>
+  const grid = document.getElementById("project-grid");
+  const buttons = document.querySelectorAll<HTMLButtonElement>(".filter-btn");
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const filter = btn.dataset.filter;
+      buttons.forEach((b) => (b.dataset.active = String(b === btn)));
+      grid?.querySelectorAll<HTMLElement>(".project-item").forEach((item) => {
+        const show = filter === "all" || item.dataset.category === filter;
+        item.style.display = show ? "" : "none";
+      });
+    });
+  });
+</script>

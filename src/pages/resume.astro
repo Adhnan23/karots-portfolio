@@ -1,0 +1,145 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getProfile, getExperiences, getEducation, getSkillsGrouped, getProjects } from "@/lib/content";
+
+const profile = await getProfile();
+const experiences = await getExperiences();
+const education = await getEducation();
+const skills = await getSkillsGrouped();
+const projects = (await getProjects({ featuredOnly: true })).slice(0, 4);
+
+function bullets(md: string) {
+  return md
+    .split("\n")
+    .map((l) => l.replace(/^[-*]\s*/, "").trim())
+    .filter(Boolean);
+}
+---
+
+<BaseLayout title="Resume — Mohammed Sheik Adhnan" noindex={true}>
+  <section class="container-page py-10">
+    <!-- Toolbar (screen only) -->
+    <div class="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
+      <a href="/about" class="font-mono text-sm text-fg-muted hover:text-accent">← about</a>
+      <div class="flex gap-3">
+        <a href="/cv.pdf" class="btn btn-primary" download>↓ download CV (PDF)</a>
+        <button class="btn btn-ghost" onclick="window.print()">print</button>
+      </div>
+    </div>
+
+    <article id="resume" class="resume mx-auto max-w-3xl">
+      <header class="resume-head">
+        <h1>{profile?.name}</h1>
+        <p class="role">{profile?.title}</p>
+        <p class="contact">
+          {profile?.email} · {profile?.website?.replace(/^https?:\/\//, "")} ·
+          {profile?.phone} · {profile?.location}
+        </p>
+      </header>
+
+      <section>
+        <h2>Summary</h2>
+        <p>{profile?.summary}</p>
+      </section>
+
+      <section>
+        <h2>Experience</h2>
+        {
+          experiences.filter((e) => e.type === "work").map((e) => (
+            <div class="entry">
+              <div class="entry-head">
+                <strong>{e.role}</strong>
+                <span class="when">{e.startDate} – {e.endDate ?? "Present"}</span>
+              </div>
+              <div class="entry-sub">{e.company}{e.location && ` · ${e.location}`}</div>
+              <ul>{bullets(e.description).map((b) => <li>{b}</li>)}</ul>
+            </div>
+          ))
+        }
+      </section>
+
+      <section>
+        <h2>Key Projects</h2>
+        {
+          projects.map((p) => (
+            <div class="entry">
+              <div class="entry-head">
+                <strong>{p.title}</strong>
+                <span class="when">{p.tech.slice(0, 4).join(" · ")}</span>
+              </div>
+              <p class="proj-sum">{p.summary}{p.liveUrl && ` — ${p.liveUrl.replace(/^https?:\/\//, "")}`}</p>
+            </div>
+          ))
+        }
+      </section>
+
+      <section>
+        <h2>Skills</h2>
+        <div class="skills">
+          {
+            skills.map((g) => (
+              <p><strong>{g.category}:</strong> {g.items.map((s) => s.name).join(", ")}</p>
+            ))
+          }
+        </div>
+      </section>
+
+      <section>
+        <h2>Education</h2>
+        {
+          education.map((ed) => (
+            <div class="entry">
+              <div class="entry-head">
+                <strong>{ed.qualification}</strong>
+                <span class="when">{ed.year}</span>
+              </div>
+              <div class="entry-sub">{ed.institution}{ed.result && ` — ${ed.result}`}</div>
+            </div>
+          ))
+        }
+      </section>
+    </article>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  /* On-screen: a "paper" card inside the dark theme. */
+  .resume {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 0.5rem;
+    padding: 3rem 3.25rem;
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    box-shadow: 0 10px 40px rgb(0 0 0 / 0.4);
+  }
+  .resume-head { text-align: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 0.9rem; }
+  .resume-head h1 { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em; }
+  .resume-head .role { font-weight: 600; color: #b8740a; margin-top: 0.15rem; }
+  .resume-head .contact { font-size: 0.78rem; color: #555; margin-top: 0.4rem; }
+  .resume section { margin-top: 1.4rem; }
+  .resume h2 {
+    font-family: var(--font-mono);
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #b8740a; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; margin-bottom: 0.6rem;
+  }
+  .resume p { font-size: 0.875rem; }
+  .resume .entry { margin-bottom: 0.85rem; }
+  .resume .entry-head { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+  .resume .entry-head strong { font-size: 0.95rem; }
+  .resume .when { font-family: var(--font-mono); font-size: 0.72rem; color: #777; white-space: nowrap; }
+  .resume .entry-sub { font-size: 0.82rem; color: #b8740a; font-weight: 500; margin-bottom: 0.3rem; }
+  .resume ul { margin: 0.2rem 0 0 1rem; }
+  .resume li { font-size: 0.84rem; margin-bottom: 0.18rem; list-style: disc; }
+  .resume .proj-sum { font-size: 0.84rem; color: #333; }
+  .resume .skills p { font-size: 0.84rem; margin-bottom: 0.25rem; }
+
+  @media print {
+    .no-print, header, footer { display: none !important; }
+    body::before, body::after { display: none !important; }
+    body { background: #fff !important; }
+    main, section { padding: 0 !important; margin: 0 !important; }
+    .resume { box-shadow: none; border-radius: 0; padding: 0; max-width: none; }
+    @page { margin: 1.4cm; }
+  }
+</style>

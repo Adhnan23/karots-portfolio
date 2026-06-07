@@ -1,0 +1,68 @@
+---
+import type { Project } from "@/db/schema";
+import { sourceLabel, categoryLabel, isLive, projectLinks } from "@/lib/project-display";
+
+interface Props {
+  project: Project;
+  index?: number;
+}
+const { project, index = 0 } = Astro.props;
+const links = projectLinks(project);
+const src = sourceLabel(project);
+const live = isLive(project);
+const num = String(index + 1).padStart(2, "0");
+---
+
+<article
+  class="card group reveal flex flex-col p-5"
+  style={`animation-delay:${Math.min(index, 8) * 60}ms`}
+>
+  <div class="flex items-center justify-between gap-3">
+    <span class="font-mono text-xs text-fg-subtle">{num}</span>
+    <div class="flex items-center gap-2">
+      {
+        live ? (
+          <span class="status status-live"><span class="status-dot" />live</span>
+        ) : (
+          <span class="tag">{categoryLabel(project.category)}</span>
+        )
+      }
+    </div>
+  </div>
+
+  <h3 class="mt-3 font-display text-xl font-semibold leading-tight text-fg">
+    <a href={`/projects/${project.slug}`} class="after:absolute after:inset-0">
+      {project.title}
+    </a>
+  </h3>
+
+  <p class="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">
+    {project.summary}
+  </p>
+
+  <div class="mt-4 flex flex-wrap gap-1.5">
+    {project.tech.slice(0, 5).map((t) => <span class="tag">{t}</span>)}
+    {project.tech.length > 5 && <span class="tag">+{project.tech.length - 5}</span>}
+  </div>
+
+  <div class="relative z-10 mt-4 flex items-center gap-4 border-t border-border-soft pt-3 font-mono text-xs">
+    {
+      links.length > 0 ? (
+        links.map((l) => (
+          <a
+            href={l.href}
+            target="_blank"
+            rel="noopener"
+            class="text-fg-muted hover:text-accent"
+          >
+            {l.kind === "live" ? "↗ " : "<> "}
+            {l.label}
+          </a>
+        ))
+      ) : (
+        <span class="text-fg-subtle">{src ?? "case study"}</span>
+      )
+    }
+    <span class="ml-auto text-fg-subtle">{project.dateRange}</span>
+  </div>
+</article>

@@ -1,0 +1,50 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getBlogPosts } from "@/lib/content";
+
+const posts = await getBlogPosts();
+---
+
+<BaseLayout title="Blog — Mohammed Sheik Adhnan" description="Notes on backend engineering, DevOps, and self-hosting.">
+  <section class="container-page py-16 md:py-20">
+    <p class="mono-label reveal">// log</p>
+    <h1 class="reveal mt-3 font-display text-4xl font-bold md:text-5xl" style="animation-delay:60ms">
+      Writing
+    </h1>
+    <p class="reveal mt-4 max-w-2xl text-fg-muted" style="animation-delay:120ms">
+      Notes on backend engineering, DevOps, and running things in production.
+    </p>
+
+    {
+      posts.length === 0 ? (
+        <p class="mt-12 font-mono text-sm text-fg-subtle">
+          <span class="text-accent">$</span> ls posts/ — no entries yet. Check back soon.
+        </p>
+      ) : (
+        <div class="mt-12 flex flex-col divide-y divide-border border-y border-border">
+          {posts.map((post, i) => (
+            <a
+              href={`/blog/${post.slug}`}
+              class="reveal group flex flex-col gap-1 py-6 transition-colors hover:bg-surface/40 md:flex-row md:items-baseline md:gap-6"
+              style={`animation-delay:${i * 60}ms`}
+            >
+              <span class="font-mono text-xs text-fg-subtle md:w-32 md:shrink-0">
+                {post.publishedAt?.toISOString().slice(0, 10)}
+              </span>
+              <div class="md:flex-1">
+                <h2 class="font-display text-xl font-semibold text-fg group-hover:text-accent">
+                  {post.title}
+                </h2>
+                <p class="mt-1 text-sm text-fg-muted">{post.excerpt}</p>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                  {post.tags.map((t) => <span class="tag">{t}</span>)}
+                  <span class="font-mono text-xs text-fg-subtle">· {post.readingTime} min read</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

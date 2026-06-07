@@ -1,0 +1,14 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="404 — Not Found" noindex={true}>
+  <section class="container-page flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
+    <p class="mono-label">error 404</p>
+    <h1 class="mt-4 font-display text-6xl font-bold md:text-8xl">404</h1>
+    <p class="mt-4 font-mono text-sm text-fg-muted">
+      <span class="text-accent">$</span> cat {Astro.url.pathname} — No such file or directory
+    </p>
+    <a href="/" class="btn btn-primary mt-8">cd ~/home</a>
+  </section>
+</BaseLayout>

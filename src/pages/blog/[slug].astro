@@ -1,0 +1,46 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getBlogPosts, getBlogPostBySlug } from "@/lib/content";
+import { renderMarkdown } from "@/lib/markdown";
+
+export async function getStaticPaths() {
+  const posts = await getBlogPosts();
+  return posts.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const post = await getBlogPostBySlug(slug!);
+if (!post) return Astro.redirect("/404");
+
+const body = await renderMarkdown(post.body);
+const date = post.publishedAt?.toISOString().slice(0, 10);
+---
+
+<BaseLayout title={`${post.title} — Blog`} description={post.excerpt} image={post.coverImageUrl ?? undefined}>
+  <article class="container-page py-12 md:py-16">
+    <a href="/blog" class="font-mono text-sm text-fg-muted hover:text-accent">← all posts</a>
+
+    <header class="mx-auto mt-6 max-w-2xl border-b border-border pb-8">
+      <div class="flex flex-wrap items-center gap-3 font-mono text-xs text-fg-subtle">
+        <span>{date}</span><span>·</span><span>{post.readingTime} min read</span>
+      </div>
+      <h1 class="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl">{post.title}</h1>
+      <div class="mt-4 flex flex-wrap gap-1.5">
+        {post.tags.map((t) => <span class="tag">{t}</span>)}
+      </div>
+    </header>
+
+    {
+      post.coverImageUrl && (
+        <img src={post.coverImageUrl} alt={post.title} class="card mx-auto mt-8 max-w-2xl" />
+      )
+    }
+
+    <div class="prose-tech mx-auto mt-10 max-w-2xl" set:html={body} />
+
+    <footer class="mx-auto mt-16 max-w-2xl border-t border-border pt-8 font-mono text-sm text-fg-subtle">
+      <span class="text-accent">$</span> end_of_file — thanks for reading.
+      <a href="/blog" class="link-accent ml-2">more posts →</a>
+    </footer>
+  </article>
+</BaseLayout>

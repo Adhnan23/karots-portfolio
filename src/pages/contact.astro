@@ -1,0 +1,116 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getProfile } from "@/lib/content";
+import { SITE } from "@/lib/nav";
+
+const profile = await getProfile();
+const email = profile?.email ?? SITE.email;
+const socials = profile?.socials ?? [];
+---
+
+<BaseLayout title="Contact — Mohammed Sheik Adhnan" description="Get in touch about backend, full-stack, or DevOps work.">
+  <section class="container-page grid gap-12 py-16 md:grid-cols-2 md:py-24">
+    <div>
+      <p class="mono-label reveal">// contact</p>
+      <h1 class="reveal mt-3 font-display text-4xl font-bold leading-tight md:text-5xl" style="animation-delay:60ms">
+        Let's build<br />something solid.
+      </h1>
+      <p class="reveal mt-5 max-w-md text-fg-muted" style="animation-delay:120ms">
+        Backend, full-stack, or a server that needs looking after — tell me what
+        you're working on and I'll get back to you.
+      </p>
+
+      <div class="reveal mt-8 flex flex-col gap-3 font-mono text-sm" style="animation-delay:180ms">
+        <a href={`mailto:${email}`} class="text-fg-muted hover:text-accent">
+          <span class="text-accent">→</span> {email}
+        </a>
+        {
+          socials.map((s) => (
+            <a href={s.url} target="_blank" rel="noopener" class="text-fg-muted hover:text-accent">
+              <span class="text-accent">→</span> {s.label}
+            </a>
+          ))
+        }
+        <span class="text-fg-subtle"><span class="text-accent">→</span> {profile?.location}</span>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form id="contact-form" class="card reveal flex flex-col gap-4 p-6 md:p-8" style="animation-delay:140ms">
+      <label class="flex flex-col gap-1.5">
+        <span class="mono-label">name</span>
+        <input name="name" required maxlength="120" class="field" placeholder="Your name" />
+      </label>
+      <label class="flex flex-col gap-1.5">
+        <span class="mono-label">email</span>
+        <input name="email" type="email" required maxlength="200" class="field" placeholder="you@example.com" />
+      </label>
+      <label class="flex flex-col gap-1.5">
+        <span class="mono-label">message</span>
+        <textarea name="message" required maxlength="4000" rows="5" class="field resize-y" placeholder="What can I help with?"></textarea>
+      </label>
+      <!-- honeypot: hidden from humans, bots fill it -->
+      <input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
+      <button type="submit" class="btn btn-primary justify-center" id="submit-btn">
+        send message
+      </button>
+      <p id="form-status" class="hidden font-mono text-sm" role="status"></p>
+    </form>
+  </section>
+</BaseLayout>
+
+<style>
+  .field {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.95rem;
+    color: var(--color-fg);
+    transition: border-color 0.15s ease;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+  .field::placeholder { color: var(--color-fg-subtle); }
+</style>
+
+<script>
+  const form = document.getElementById("contact-form") as HTMLFormElement;
+  const status = document.getElementById("form-status")!;
+  const btn = document.getElementById("submit-btn") as HTMLButtonElement;
+
+  function setStatus(msg: string, ok: boolean) {
+    status.textContent = msg;
+    status.classList.remove("hidden");
+    status.style.color = ok ? "var(--color-online)" : "var(--color-danger)";
+  }
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = "sending…";
+    try {
+      const data = Object.fromEntries(new FormData(form));
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        form.reset();
+        setStatus("✓ Message sent — I'll be in touch.", true);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setStatus(body.error ?? "Something went wrong. Try email instead.", false);
+      }
+    } catch {
+      setStatus("Network error. Try email instead.", false);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+</script>

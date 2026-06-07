@@ -1,26 +1,142 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import SectionHead from "@/components/SectionHead.astro";
+import ProjectCard from "@/components/ProjectCard.astro";
+import { getProfile, getProjects, getBlogPosts, getSkillsGrouped } from "@/lib/content";
 import { SITE } from "@/lib/nav";
-// NOTE: placeholder home — replaced with DB-driven content in Phase 3.
+
+const profile = await getProfile();
+const featured = await getProjects({ featuredOnly: true });
+const posts = (await getBlogPosts()).slice(0, 3);
+const skills = await getSkillsGrouped();
+
+const name = profile?.name ?? SITE.name;
+const [first, ...rest] = name.split(" ");
+const stats = [
+  { value: "8+", label: "apps in production" },
+  { value: "9+ mo", label: "zero unplanned downtime" },
+  { value: "Rank 1", label: "HND, Distinction" },
+];
+const dateStr = new Date().toISOString().slice(0, 10);
 ---
 
 <BaseLayout>
-  <section class="container-page py-24 md:py-32">
-    <p class="mono-label">whoami</p>
-    <h1 class="mt-4 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
-      {SITE.name.split(" ")[0]}{" "}
-      <span class="text-accent">{SITE.name.split(" ").slice(1).join(" ")}</span>
-    </h1>
-    <p class="mt-5 max-w-2xl text-lg text-fg-muted">
-      {SITE.role} — building and shipping systems real users depend on, from REST
-      APIs and database architecture to Dockerized, SSL-secured self-hosted infra.
-    </p>
-    <div class="mt-8 flex flex-wrap gap-3">
-      <a href="/projects" class="btn btn-primary">view projects</a>
-      <a href="/contact" class="btn btn-ghost">get in touch</a>
+  <!-- Hero -->
+  <section class="container-page grid items-center gap-12 py-16 md:grid-cols-[1.1fr_0.9fr] md:py-24">
+    <div>
+      <p class="mono-label reveal">// whoami</p>
+      <h1 class="reveal mt-4 font-display text-5xl font-bold leading-[1.02] tracking-tight md:text-7xl" style="animation-delay:60ms">
+        {first}<br /><span class="text-accent">{rest.join(" ")}</span>
+      </h1>
+      <p class="reveal mt-6 max-w-xl text-lg leading-relaxed text-fg-muted" style="animation-delay:140ms">
+        {profile?.title ?? SITE.role}. {profile?.tagline}
+      </p>
+
+      <div class="reveal mt-8 flex flex-wrap gap-3" style="animation-delay:220ms">
+        <a href="/projects" class="btn btn-primary">view projects</a>
+        <a href="/contact" class="btn btn-ghost">get in touch</a>
+        <a href="/resume" class="btn btn-ghost">resume</a>
+      </div>
+
+      <dl class="reveal mt-12 grid grid-cols-3 gap-4 border-t border-border pt-6" style="animation-delay:300ms">
+        {
+          stats.map((s) => (
+            <div>
+              <dt class="font-display text-2xl font-bold text-fg md:text-3xl">{s.value}</dt>
+              <dd class="mt-1 font-mono text-[0.68rem] uppercase tracking-wide text-fg-subtle">
+                {s.label}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
     </div>
-    <p class="mt-12 font-mono text-sm text-fg-subtle">
-      <span class="text-accent">$</span> status: scaffolding — content coming in next phase
-    </p>
+
+    <!-- neofetch-style terminal card -->
+    <div class="reveal" style="animation-delay:180ms">
+      <div class="card overflow-hidden">
+        <div class="flex items-center gap-2 border-b border-border bg-bg-soft px-4 py-2.5">
+          <span class="h-3 w-3 rounded-full" style="background:var(--color-danger)"></span>
+          <span class="h-3 w-3 rounded-full" style="background:var(--color-warn)"></span>
+          <span class="h-3 w-3 rounded-full" style="background:var(--color-online)"></span>
+          <span class="ml-2 font-mono text-xs text-fg-subtle">{SITE.handle}@karots: ~</span>
+        </div>
+        <pre class="overflow-x-auto p-5 font-mono text-[0.78rem] leading-relaxed text-fg-muted"><span class="text-accent">$</span> neofetch
+<span class="text-accent">user</span>    {name}
+<span class="text-accent">role</span>    {profile?.title ?? SITE.role}
+<span class="text-accent">loc </span>    {profile?.location}
+<span class="text-accent">os  </span>    Ubuntu Server 24.04 (self-hosted)
+<span class="text-accent">stack</span>   Go · Bun · TypeScript · Postgres
+<span class="text-accent">infra</span>   Docker · NGINX · Cloudflare
+<span class="text-accent">edu </span>    HND Software Eng · Distinction · Rank 1
+<span class="text-accent">up  </span>    <span style="color:var(--color-online)">● online</span> · 0 unplanned downtime
+<span class="text-accent">$</span> <span class="inline-block w-2 animate-pulse bg-accent">&nbsp;</span></pre>
+      </div>
+      <p class="mt-3 text-right font-mono text-xs text-fg-subtle">last_sync: {dateStr}</p>
+    </div>
+  </section>
+
+  <!-- Featured projects -->
+  <section class="container-page py-16">
+    <SectionHead index="01" label="featured" title="Selected work" href="/projects" linkText="all projects" />
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {featured.map((p, i) => <ProjectCard project={p} index={i} />)}
+    </div>
+  </section>
+
+  <!-- Skills snapshot -->
+  <section class="container-page py-16">
+    <SectionHead index="02" label="stack" title="Tools of the trade" />
+    <div class="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        skills.map((g) => (
+          <div class="reveal">
+            <h3 class="mono-label mb-3">{g.category}</h3>
+            <ul class="flex flex-wrap gap-1.5">
+              {g.items.map((s) => <li class="tag">{s.name}</li>)}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Latest writing -->
+  {
+    posts.length > 0 && (
+      <section class="container-page py-16">
+        <SectionHead index="03" label="log" title="Recent writing" href="/blog" linkText="all posts" />
+        <div class="grid gap-4 md:grid-cols-3">
+          {posts.map((post) => (
+            <a href={`/blog/${post.slug}`} class="card reveal flex flex-col p-5">
+              <span class="font-mono text-xs text-fg-subtle">
+                {post.publishedAt?.toISOString().slice(0, 10)} · {post.readingTime} min
+              </span>
+              <h3 class="mt-2 font-display text-lg font-semibold leading-snug text-fg">
+                {post.title}
+              </h3>
+              <p class="mt-2 line-clamp-3 text-sm text-fg-muted">{post.excerpt}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- CTA -->
+  <section class="container-page py-20">
+    <div class="card relative overflow-hidden p-10 text-center md:p-16">
+      <p class="mono-label">// open to work</p>
+      <h2 class="mx-auto mt-4 max-w-2xl font-display text-3xl font-bold leading-tight text-fg md:text-4xl">
+        Got a backend to build or a server that needs a hand?
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-fg-muted">
+        I take projects end-to-end — from API design to the box it runs on.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/contact" class="btn btn-primary">start a conversation</a>
+        <a href={SITE.github} target="_blank" rel="noopener" class="btn btn-ghost">browse github</a>
+      </div>
+    </div>
   </section>
 </BaseLayout>
