@@ -63,11 +63,9 @@ function bullets(md: string) {
         {
           projects.map((p) => (
             <div class="entry">
-              <div class="entry-head">
-                <strong>{p.title}</strong>
-                <span class="when">{p.tech.slice(0, 4).join(" · ")}</span>
-              </div>
+              <strong class="proj-title">{p.title}</strong>
               <p class="proj-sum">{p.summary}{p.liveUrl && ` — ${p.liveUrl.replace(/^https?:\/\//, "")}`}</p>
+              <p class="proj-tech">{p.tech.slice(0, 6).join(" · ")}</p>
             </div>
           ))
         }
@@ -131,15 +129,47 @@ function bullets(md: string) {
   .resume .entry-sub { font-size: 0.82rem; color: #b8740a; font-weight: 500; margin-bottom: 0.3rem; }
   .resume ul { margin: 0.2rem 0 0 1rem; }
   .resume li { font-size: 0.84rem; margin-bottom: 0.18rem; list-style: disc; }
+  .resume .proj-title { font-size: 0.95rem; }
   .resume .proj-sum { font-size: 0.84rem; color: #333; }
+  .resume .proj-tech {
+    font-family: var(--font-mono); font-size: 0.7rem; color: #888;
+    margin-top: 0.1rem; overflow-wrap: anywhere;
+  }
   .resume .skills p { font-size: 0.84rem; margin-bottom: 0.25rem; }
 
   @media print {
-    .no-print, header, footer { display: none !important; }
+    /* Hide site chrome only — NOT the resume's own <header class="resume-head">. */
+    .no-print { display: none !important; }
+    body > header, body > footer { display: none !important; }
     body::before, body::after { display: none !important; }
-    body { background: #fff !important; }
+
+    /* Flatten every layer to white so nothing dark bleeds into the page. */
+    html, body, main, .container-page, .resume { background: #fff !important; }
+    .container-page { max-width: none !important; padding: 0 !important; }
     main, section { padding: 0 !important; margin: 0 !important; }
-    .resume { box-shadow: none; border-radius: 0; padding: 0; max-width: none; }
-    @page { margin: 1.4cm; }
+    .resume {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      /* White inset lives INSIDE the page so margins are reliably white,
+         not the dark band Chromium leaves in the @page margin area. */
+      padding: 13mm 14mm !important;
+      max-width: none !important;
+      color: #1a1a1a !important;
+    }
+
+    /* Let long project tech lists wrap instead of clipping at the page edge.
+       min-width:0 lets the flex children shrink below their content size. */
+    .resume .entry-head { flex-wrap: wrap; }
+    .resume .entry-head > * { min-width: 0; }
+    .resume .when { white-space: normal; }
+
+    /* Don't split an entry across pages; keep each heading with its content. */
+    .resume section { break-inside: avoid; }
+    .resume .entry { break-inside: avoid; }
+    .resume h2 { break-after: avoid; }
+    .resume-head { break-after: avoid; }
+
+    /* Full-bleed white page; the inset above provides the visual margin. */
+    @page { margin: 0; }
   }
 </style>

@@ -1,0 +1,89 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { resolveEnv, envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+
+const env = resolveEnv(envFromLocals(Astro.locals));
+const configured = typeof env.CF_DEPLOY_HOOK_URL === "string" && env.CF_DEPLOY_HOOK_URL.length > 0;
+
+const params = Astro.url.searchParams;
+const published = params.has("published");
+const errorKind = params.get("error");
+
+const ERROR_TEXT: Record<string, string> = {
+  unconfigured: "No deploy hook is configured. Set CF_DEPLOY_HOOK_URL to enable publishing.",
+  failed: "Cloudflare rejected the build request. Check the deploy hook URL.",
+  "1": "Something went wrong reaching Cloudflare. Try again.",
+};
+---
+
+<AdminLayout title="Publish">
+  {
+    published && (
+      <div
+        class="mb-5 rounded-md border px-4 py-2.5 font-mono text-sm"
+        style="border-color:color-mix(in srgb,var(--color-online) 40%,transparent);background:color-mix(in srgb,var(--color-online) 10%,transparent);color:var(--color-online)"
+      >
+        ✓ Build triggered. The public site will refresh in ~1–2 minutes.
+      </div>
+    )
+  }
+  {
+    errorKind && (
+      <div
+        class="mb-5 rounded-md border px-4 py-2.5 font-mono text-sm"
+        style="border-color:color-mix(in srgb,var(--color-danger) 40%,transparent);background:color-mix(in srgb,var(--color-danger) 10%,transparent);color:var(--color-danger)"
+      >
+        ✗ {ERROR_TEXT[errorKind] ?? "Publish failed."}
+      </div>
+    )
+  }
+
+  <div class="max-w-2xl">
+    <p class="font-mono text-sm leading-relaxed text-fg-muted">
+      The public site is statically generated. Your edits are already saved to the
+      database, but they only appear on <span class="text-accent">karots.lk</span> after
+      a rebuild. Click <span class="text-accent">Publish</span> to trigger one.
+    </p>
+
+    <div class="mt-6 card p-6">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <div class="mono-label">Deploy hook</div>
+          <div class="mt-1 font-mono text-sm">
+            {
+              configured ? (
+                <span style="color:var(--color-online)">● configured</span>
+              ) : (
+                <span class="text-fg-subtle">○ not configured</span>
+              )
+            }
+          </div>
+        </div>
+        <form method="POST" action="/api/admin/publish">
+          <button class="btn btn-primary" type="submit" disabled={!configured}>
+            ▲ publish site
+          </button>
+        </form>
+      </div>
+
+      {
+        !configured && (
+          <p class="mt-4 border-t border-border pt-4 font-mono text-xs leading-relaxed text-fg-subtle">
+            To enable: create a <span class="text-accent">Deploy hook</span> in your
+            Cloudflare Pages project (Settings → Builds &amp; deployments), then set
+            <span class="text-accent"> CF_DEPLOY_HOOK_URL</span> as a secret in Cloudflare
+            and in <span class="text-accent">.dev.vars</span> locally.
+          </p>
+        )
+      }
+    </div>
+
+    <div class="mt-6 rounded-lg border border-border bg-bg-soft p-5 font-mono text-xs leading-relaxed text-fg-muted">
+      <span class="text-accent">tip:</span> batch your edits, then publish once. Each
+      publish runs a fresh <span class="text-accent">astro build</span> against the
+      database, so there is no need to publish after every small change.
+    </div>
+  </div>
+</AdminLayout>
