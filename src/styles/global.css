@@ -49,6 +49,14 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Defense-in-depth: a raw media element can never exceed its container's width
+   (utilities like w-full / max-w-* still win where set). */
+img,
+svg,
+video {
+  max-width: 100%;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-fg);
