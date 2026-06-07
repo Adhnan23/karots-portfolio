@@ -6,6 +6,7 @@ import {
   education,
   projects,
   blogPosts,
+  contactMessages,
   type Profile,
   type Skill,
 } from "@/db/schema";
@@ -81,4 +82,30 @@ export async function getBlogPostBySlug(slug: string, env?: AppEnv) {
   const db = getDb(env);
   const [row] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1);
   return row ?? null;
+}
+
+export interface AdminStats {
+  projects: number;
+  projectsPublished: number;
+  posts: number;
+  postsPublished: number;
+  messages: number;
+  messagesUnread: number;
+}
+
+export async function getAdminStats(env?: AppEnv): Promise<AdminStats> {
+  const db = getDb(env);
+  const [proj, post, msg] = await Promise.all([
+    db.select().from(projects),
+    db.select().from(blogPosts),
+    db.select().from(contactMessages),
+  ]);
+  return {
+    projects: proj.length,
+    projectsPublished: proj.filter((p) => p.published).length,
+    posts: post.length,
+    postsPublished: post.filter((p) => p.published).length,
+    messages: msg.length,
+    messagesUnread: msg.filter((m) => !m.read).length,
+  };
 }

@@ -28,3 +28,13 @@ export function requireEnv(key: keyof CloudflareEnv, runtimeEnv?: AppEnv): strin
   }
   return v;
 }
+
+/** Pull the Cloudflare Worker runtime env off Astro `locals` (undefined at build). */
+export function envFromLocals(locals: App.Locals): AppEnv | undefined {
+  return (locals as { runtime?: { env?: AppEnv } }).runtime?.env;
+}
+
+/** Whether to set Secure cookies (true except on localhost http). */
+export function isSecureRequest(url: URL): boolean {
+  return url.protocol === "https:";
+}

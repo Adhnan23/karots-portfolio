@@ -1,0 +1,48 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getAdminStats } from "@/lib/content";
+import { envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+
+const session = Astro.locals.session!;
+const stats = await getAdminStats(envFromLocals(Astro.locals));
+
+const cards = [
+  { label: "Projects", value: stats.projects, sub: `${stats.projectsPublished} published`, href: "/admin/projects" },
+  { label: "Blog posts", value: stats.posts, sub: `${stats.postsPublished} published`, href: "/admin/blog" },
+  { label: "Messages", value: stats.messages, sub: `${stats.messagesUnread} unread`, href: "/admin/messages" },
+];
+---
+
+<AdminLayout title="Dashboard">
+  <p class="font-mono text-sm text-fg-muted">
+    <span class="text-accent">$</span> welcome back, {session.name ?? session.login}.
+  </p>
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-3">
+    {
+      cards.map((c) => (
+        <a href={c.href} class="card p-5 transition-colors">
+          <div class="mono-label">{c.label}</div>
+          <div class="mt-2 font-display text-4xl font-bold text-fg">{c.value}</div>
+          <div class="mt-1 font-mono text-xs text-fg-subtle">{c.sub}</div>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2 class="mt-10 mono-label">quick actions</h2>
+  <div class="mt-3 flex flex-wrap gap-3">
+    <a href="/admin/projects/new" class="btn btn-ghost">+ new project</a>
+    <a href="/admin/blog/new" class="btn btn-ghost">+ new post</a>
+    <a href="/admin/profile" class="btn btn-ghost">edit profile</a>
+    <a href="/admin/publish" class="btn btn-primary">▲ publish site</a>
+  </div>
+
+  <div class="mt-10 rounded-lg border border-border bg-bg-soft p-5 font-mono text-xs leading-relaxed text-fg-muted">
+    <span class="text-accent">note:</span> edits are saved to the database immediately,
+    but the public site is static. Use <span class="text-accent">Publish</span> to rebuild
+    and push your changes live.
+  </div>
+</AdminLayout>
