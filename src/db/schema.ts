@@ -76,7 +76,14 @@ export const projects = pgTable("projects", {
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   summary: text("summary").notNull().default(""),
-  description: text("description").notNull().default(""), // markdown
+  description: text("description").notNull().default(""), // markdown — overview / fallback
+  // Case-study structure (all optional; the detail page falls back to `description`).
+  problem: text("problem").notNull().default(""), // markdown
+  approach: text("approach").notNull().default(""), // markdown
+  outcome: text("outcome").notNull().default(""), // markdown
+  /** [{ label, value }] impact metrics, e.g. { label: "p95 latency", value: "-40%" } */
+  metrics: jsonb("metrics").$type<Metric[]>().notNull().default([]),
+  architectureImageUrl: text("architecture_image_url"),
   tech: text("tech").array().notNull().default([]),
   role: text("role").notNull().default(""),
   category: text("category").notNull().default("app"),
@@ -110,6 +117,26 @@ export const blogPosts = pgTable("blog_posts", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Services watched by the uptime board (curated via /admin/monitors). */
+export const monitors = pgTable("monitors", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  url: text("url").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
+});
+
+/** Append-only healthcheck samples written by the pinger (scripts/healthcheck.ts). */
+export const checks = pgTable("checks", {
+  id: serial("id").primaryKey(),
+  monitorId: integer("monitor_id").notNull(),
+  ok: boolean("ok").notNull(),
+  statusCode: integer("status_code").notNull().default(0),
+  responseMs: integer("response_ms").notNull().default(0),
+  checkedAt: timestamp("checked_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const contactMessages = pgTable("contact_messages", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -129,6 +156,10 @@ export interface GalleryImage {
   url: string;
   alt?: string;
 }
+export interface Metric {
+  label: string;
+  value: string;
+}
 
 // --- Inferred row types ---
 export type Profile = typeof profile.$inferSelect;
@@ -138,6 +169,9 @@ export type Education = typeof education.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
+export type Monitor = typeof monitors.$inferSelect;
+export type Check = typeof checks.$inferSelect;
 
 export type NewProject = typeof projects.$inferInsert;
 export type NewBlogPost = typeof blogPosts.$inferInsert;
+export type NewMonitor = typeof monitors.$inferInsert;

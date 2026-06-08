@@ -7,11 +7,13 @@ import {
   projects,
   blogPosts,
   contactMessages,
+  monitors,
+  checks,
   type Profile,
   type Skill,
 } from "@/db/schema";
 import type { AppEnv } from "@/lib/env";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { eq, desc, asc, and, gte } from "drizzle-orm";
 
 /**
  * Content access layer. Public (static) pages call these at build time with no
@@ -82,6 +84,88 @@ export async function getBlogPostBySlug(slug: string, env?: AppEnv) {
   const db = getDb(env);
   const [row] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1);
   return row ?? null;
+}
+
+export interface SparkPoint {
+  ok: boolean;
+  responseMs: number;
+  checkedAt: Date;
+}
+export interface MonitorStatus {
+  name: string;
+  slug: string;
+  url: string;
+  up: boolean | null; // null = no checks yet
+  lastCheckedAt: Date | null;
+  uptime24h: number | null; // percent 0–100, null if no samples in window
+  uptime30d: number | null;
+  uptime90d: number | null;
+  avgMs: number | null; // avg latency of successful checks (last 30d)
+  spark: SparkPoint[]; // most-recent-last, up to 30 points
+}
+export interface StatusBoard {
+  monitors: MonitorStatus[];
+  allOperational: boolean;
+  generatedAt: Date;
+}
+
+/**
+ * Aggregate the uptime board from raw `checks`. Pure JS aggregation over the
+ * last 90 days of samples. Used by the SSR /status page (live data).
+ */
+export async function getStatusBoard(env?: AppEnv): Promise<StatusBoard> {
+  const db = getDb(env);
+  const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
+  const since90 = new Date(now - 90 * day);
+
+  const [mons, rows] = await Promise.all([
+    db.select().from(monitors).where(eq(monitors.enabled, true)).orderBy(asc(monitors.sort)),
+    db.select().from(checks).where(gte(checks.checkedAt, since90)).orderBy(asc(checks.checkedAt)),
+  ]);
+
+  const byMonitor = new Map<number, typeof rows>();
+  for (const r of rows) {
+    const arr = byMonitor.get(r.monitorId) ?? [];
+    arr.push(r);
+    byMonitor.set(r.monitorId, arr);
+  }
+
+  const uptimePct = (samples: typeof rows, windowMs: number): number | null => {
+    const from = now - windowMs;
+    const inWin = samples.filter((s) => s.checkedAt.getTime() >= from);
+    if (inWin.length === 0) return null;
+    const up = inWin.filter((s) => s.ok).length;
+    return Math.round((up / inWin.length) * 1000) / 10; // 1 decimal
+  };
+
+  const result: MonitorStatus[] = mons.map((m) => {
+    const samples = byMonitor.get(m.id) ?? [];
+    const last = samples[samples.length - 1] ?? null;
+    const okLast30 = samples.filter((s) => s.ok && s.checkedAt.getTime() >= now - 30 * day);
+    const avgMs =
+      okLast30.length > 0
+        ? Math.round(okLast30.reduce((a, s) => a + s.responseMs, 0) / okLast30.length)
+        : null;
+    return {
+      name: m.name,
+      slug: m.slug,
+      url: m.url,
+      up: last ? last.ok : null,
+      lastCheckedAt: last ? last.checkedAt : null,
+      uptime24h: uptimePct(samples, day),
+      uptime30d: uptimePct(samples, 30 * day),
+      uptime90d: uptimePct(samples, 90 * day),
+      avgMs,
+      spark: samples.slice(-30).map((s) => ({ ok: s.ok, responseMs: s.responseMs, checkedAt: s.checkedAt })),
+    };
+  });
+
+  return {
+    monitors: result,
+    allOperational: result.length > 0 && result.every((m) => m.up === true),
+    generatedAt: new Date(),
+  };
 }
 
 export interface AdminStats {

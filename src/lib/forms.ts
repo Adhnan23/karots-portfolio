@@ -28,6 +28,23 @@ export function fList(fd: FormData, key: string): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Newline-separated `Label | Value` pairs → { label, value }[].
+ * Blank lines and lines without a separator are skipped.
+ */
+export function fPairs(fd: FormData, key: string, sep = "|"): { label: string; value: string }[] {
+  return fStr(fd, key)
+    .split("\n")
+    .map((line) => {
+      const i = line.indexOf(sep);
+      if (i === -1) return null;
+      const label = line.slice(0, i).trim();
+      const value = line.slice(i + 1).trim();
+      return label && value ? { label, value } : null;
+    })
+    .filter((x): x is { label: string; value: string } => x !== null);
+}
+
 /** slugify a title for use as a URL slug. */
 export function slugify(input: string): string {
   return input

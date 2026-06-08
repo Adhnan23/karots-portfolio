@@ -23,6 +23,9 @@ async function main() {
   await db.delete(schema.experiences);
   await db.delete(schema.skills);
   await db.delete(schema.profile);
+  // Note: `checks` (healthcheck samples) are intentionally NOT cleared — they're
+  // operational history written by the pinger, not seed content. We only upsert
+  // the curated `monitors` list below.
 
   // --- Profile ---
   await db.insert(schema.profile).values({
@@ -160,6 +163,23 @@ async function main() {
       featured: true,
       dateRange: "2026",
       sort: 0,
+      metrics: [
+        { label: "deploy artifact", value: "1 binary" },
+        { label: "runtime deps", value: "Postgres only" },
+        { label: "surfaces", value: "cashier + admin" },
+        { label: "auth", value: "phone + PIN" },
+      ],
+      problem: [
+        "A retail shop needed a point-of-sale that a non-technical owner could deploy and a cashier could run on cheap hardware — without a Node runtime, a build step on the box, or a stack of services to keep alive.",
+      ].join("\n"),
+      approach: [
+        "I built it in **Go with Echo**, embedding *everything* — HTML templates, CSS/JS (HTMX, Alpine, Tailwind, JsBarcode) and DB migrations — via `go:embed`. The result compiles to a **single static binary**; deployment is the binary + a `.env` + a Postgres, nothing else.",
+        "",
+        "One server routes each user to the **cashier terminal** (sell, scan, price/stock checks) or the **admin panel** (catalog, inventory, sales, purchasing, finances) based on role, authenticated by phone number + PIN. HTMX keeps it snappy without a SPA build.",
+      ].join("\n"),
+      outcome: [
+        "Operationally trivial to ship and update — copy one binary. The embedded-asset approach removed the entire class of \"works on my machine\" deployment bugs and made the POS runnable on hardware as modest as the shop already owned.",
+      ].join("\n"),
     },
     {
       slug: "community-prayer-display",
@@ -202,6 +222,23 @@ async function main() {
       featured: true,
       dateRange: "2023 – present",
       sort: 2,
+      metrics: [
+        { label: "uptime (unplanned)", value: "9+ mo, 0 down" },
+        { label: "services in prod", value: "8+" },
+        { label: "backups / day", value: "3×" },
+        { label: "monthly cost", value: "~$0 + power" },
+      ],
+      problem: [
+        "Paying clients needed reliable hosting for a growing set of apps, but managed PaaS pricing scaled badly for small Sri Lankan businesses and gave me no control over the network, SSL, or backups. I needed production-grade reliability on a hobbyist budget.",
+      ].join("\n"),
+      approach: [
+        "I repurposed a desktop PC on a fiber line, installed **Ubuntu Server**, and manage it entirely over SSH. Every service is a Docker container on an **isolated network**, fronted by **Nginx Proxy Manager** for per-subdomain routing and automatic Let's Encrypt SSL.",
+        "",
+        "Reliability is engineered, not hoped for: **3× daily backup cron jobs** ship data off-box, containers carry restart policies, and the only downtime is a **weekly scheduled restart**. Portainer and n8n give me a dashboard and automation layer over the whole fleet.",
+      ].join("\n"),
+      outcome: [
+        "The box has run **8+ containerized services with zero unplanned downtime across 9+ months**. Owning the full stack — hardware, network, SSL, backups — turned deployment concerns into design inputs and made me a sharper backend engineer.",
+      ].join("\n"),
     },
     {
       slug: "ecommerce-platform",
@@ -224,6 +261,23 @@ async function main() {
       featured: true,
       dateRange: "2024",
       sort: 3,
+      metrics: [
+        { label: "in production", value: "6+ mo" },
+        { label: "unplanned downtime", value: "0" },
+        { label: "checkout friction", value: "1-tap WhatsApp" },
+        { label: "image base", value: "Alpine" },
+      ],
+      problem: [
+        "A spare-parts shop owner — non-technical — needed an online store he could run himself, without a payment gateway (uncommon for his customers) and without learning a complex admin.",
+      ].join("\n"),
+      approach: [
+        "I built a **mobile-responsive admin panel** with plain CRUD for products, categories, and image uploads, designed so a non-technical owner can run it from his phone. Checkout skips card processing entirely: it composes a **pre-filled WhatsApp message** with the full order and routes it to the owner to confirm.",
+        "",
+        "Deployment uses **Alpine-based Docker images** for fast reproducible builds, with **automated daily backups** on my self-hosted server.",
+      ].join("\n"),
+      outcome: [
+        "Live and in daily use for **6+ months with zero unplanned downtime**. The WhatsApp-redirect flow matched how the shop's customers already buy, so adoption needed no customer education.",
+      ].join("\n"),
     },
     {
       slug: "karots-migrate",
@@ -466,8 +520,25 @@ async function main() {
     },
   ]);
 
+  // --- Monitors (status board) — upsert by slug so we never orphan `checks`. ---
+  const monitorRows = [
+    { slug: "karots-lk", name: "karots.lk", url: "https://karots.lk", sort: 0 },
+    { slug: "ecommerce", name: "Spare-parts Store", url: "https://ecom.karotserver.duckdns.org", sort: 1 },
+    { slug: "due-tracker", name: "Due Tracker", url: "https://due.karotserver.duckdns.org/", sort: 2 },
+    { slug: "kalpitiya-transport", name: "Kalpitiya Transport", url: "https://www.kalpitiyatransport.com/", sort: 3 },
+  ];
+  for (const m of monitorRows) {
+    await db
+      .insert(schema.monitors)
+      .values({ ...m, enabled: true })
+      .onConflictDoUpdate({
+        target: schema.monitors.slug,
+        set: { name: m.name, url: m.url, sort: m.sort, enabled: true },
+      });
+  }
+
   console.log(
-    `✓ Seed complete — ${projects.length} projects, ${skillRows.length} skills, 3 experiences, 3 education, 1 post.`
+    `✓ Seed complete — ${projects.length} projects, ${skillRows.length} skills, 3 experiences, 3 education, 1 post, ${monitorRows.length} monitors.`
   );
 }
 

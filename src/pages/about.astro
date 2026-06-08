@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import SectionHead from "@/components/SectionHead.astro";
 import { getProfile, getExperiences, getEducation, getSkillsGrouped } from "@/lib/content";
+import { getGitHubPresence } from "@/lib/github";
 import { renderMarkdown } from "@/lib/markdown";
 import { SITE } from "@/lib/nav";
 
@@ -9,6 +10,7 @@ const profile = await getProfile();
 const experiences = await getExperiences();
 const education = await getEducation();
 const skills = await getSkillsGrouped();
+const github = await getGitHubPresence();
 
 const expRendered = await Promise.all(
   experiences.map(async (e) => ({ ...e, html: await renderMarkdown(e.description) }))
@@ -95,7 +97,7 @@ const other = expRendered.filter((e) => e.type === "other");
   </section>
 
   <!-- Skills -->
-  <section class="container-page py-12 pb-20">
+  <section class="container-page py-12">
     <SectionHead index="04" label="stack" title="Skills" />
     <div class="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
       {
@@ -110,4 +112,85 @@ const other = expRendered.filter((e) => e.type === "other");
       }
     </div>
   </section>
+
+  <!-- Open source / GitHub presence (build-time; omitted if unavailable) -->
+  {
+    github && (
+      <section class="container-page py-12 pb-20">
+        <SectionHead
+          index="05"
+          label="open source"
+          title="On GitHub"
+          href={github.profileUrl}
+          linkText="@Adhnan23"
+        />
+
+        {github.pinned.length > 0 && (
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {github.pinned.map((r, i) => (
+              <a
+                href={r.url}
+                target="_blank"
+                rel="noopener"
+                class="card reveal flex flex-col p-5 hover:border-accent"
+                style={`animation-delay:${Math.min(i, 8) * 50}ms`}
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-mono text-sm text-accent">{"<> "}{r.name}</span>
+                  <span class="font-mono text-xs text-fg-subtle">★ {r.stars}</span>
+                </div>
+                {r.description && <p class="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{r.description}</p>}
+                {r.language && (
+                  <div class="mt-3 flex items-center gap-1.5 font-mono text-xs text-fg-subtle">
+                    <span class="inline-block h-2.5 w-2.5 rounded-full" style={`background:${r.languageColor ?? "var(--color-accent)"}`} />
+                    {r.language}
+                  </div>
+                )}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {github.weeks.length > 0 && (
+          <div class="card mt-4 p-5">
+            <p class="mb-3 font-mono text-xs text-fg-subtle">
+              {github.totalContributions.toLocaleString()} contributions in the last year
+            </p>
+            <div class="overflow-x-auto">
+              <svg
+                width={github.weeks.length * 13}
+                height={7 * 13}
+                viewBox={`0 0 ${github.weeks.length * 13} ${7 * 13}`}
+                class="block"
+                aria-hidden="true"
+              >
+                {github.weeks.map((week, x) =>
+                  week.map((day) => (
+                    <rect
+                      x={x * 13}
+                      y={new Date(day.date).getUTCDay() * 13}
+                      width="11"
+                      height="11"
+                      rx="2"
+                      fill="var(--color-accent)"
+                      fill-opacity={[0.06, 0.3, 0.5, 0.72, 1][day.level]}
+                    >
+                      <title>{`${day.date}: ${day.count} contributions`}</title>
+                    </rect>
+                  ))
+                )}
+              </svg>
+            </div>
+            <div class="mt-3 flex items-center justify-end gap-1.5 font-mono text-[0.65rem] text-fg-subtle">
+              less
+              {[0.06, 0.3, 0.5, 0.72, 1].map((o) => (
+                <span class="inline-block h-2.5 w-2.5 rounded-sm" style={`background:var(--color-accent);opacity:${o}`} />
+              ))}
+              more
+            </div>
+          </div>
+        )}
+      </section>
+    )
+  }
 </BaseLayout>

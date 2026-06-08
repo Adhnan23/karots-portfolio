@@ -25,6 +25,8 @@ jobs:
         env:
           PUBLIC_SITE_URL: https://karots.lk
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Optional: build-time GitHub presence on /about. Section is omitted if unset.
+          GITHUB_READ_TOKEN: ${{ secrets.GITHUB_READ_TOKEN }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

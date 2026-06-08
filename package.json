@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun run scripts/seed.ts",
+    "healthcheck": "bun run scripts/healthcheck.ts",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "cv:pdf": "bun run scripts/generate-cv.ts",
@@ -37,6 +38,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@cloudflare/workers-types": "^4.20250109.0",
     "@tailwindcss/vite": "^4.1.0",
     "@types/node": "^22.10.0",
@@ -45,7 +47,7 @@
     "drizzle-kit": "^0.31.0",
     "playwright-core": "^1.60.0",
     "tailwindcss": "^4.1.0",
-    "typescript": "^5.7.0",
+    "typescript": "^6.0.3",
     "wrangler": "^4.0.0"
   }
 }

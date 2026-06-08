@@ -3,7 +3,7 @@ import { getDb } from "@/db";
 import { projects, type NewProject } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { envFromLocals } from "@/lib/env";
-import { fStr, fOpt, fBool, fInt, fList, slugify } from "@/lib/forms";
+import { fStr, fOpt, fBool, fInt, fList, fPairs, slugify } from "@/lib/forms";
 import { redirectBack, failed } from "@/lib/admin-response";
 
 export const prerender = false;
@@ -32,6 +32,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       title,
       summary: fStr(fd, "summary"),
       description: fStr(fd, "description"),
+      problem: fStr(fd, "problem"),
+      approach: fStr(fd, "approach"),
+      outcome: fStr(fd, "outcome"),
+      metrics: fPairs(fd, "metrics"),
+      architectureImageUrl: fOpt(fd, "architectureImageUrl"),
       tech: fList(fd, "tech"),
       role: fStr(fd, "role"),
       category: fStr(fd, "category", "app"),

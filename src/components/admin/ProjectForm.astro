@@ -31,9 +31,34 @@ const demos = ["none", "planned", "live"];
   </div>
 
   <div>
-    <label class="field-label" for="description">Description (Markdown)</label>
-    <textarea class="field font-mono text-sm" id="description" name="description" rows="10">{p?.description ?? ""}</textarea>
+    <label class="field-label" for="description">Overview (Markdown)</label>
+    <textarea class="field font-mono text-sm" id="description" name="description" rows="6">{p?.description ?? ""}</textarea>
+    <p class="field-hint">Short intro. The case-study sections below take over the page when filled; if they're all empty this overview is shown instead.</p>
   </div>
+
+  <fieldset class="space-y-5 rounded-lg border border-border p-4">
+    <legend class="px-2 font-mono text-xs uppercase tracking-wide text-accent">case study</legend>
+
+    <div>
+      <label class="field-label" for="metrics">Impact metrics — one per line as <code>Label | Value</code></label>
+      <textarea class="field font-mono text-sm" id="metrics" name="metrics" rows="3" placeholder="p95 latency | -40%&#10;uptime | 9+ mo&#10;throughput | 2k req/s">{(p?.metrics ?? []).map((m) => `${m.label} | ${m.value}`).join("\n")}</textarea>
+    </div>
+
+    <div>
+      <label class="field-label" for="problem">Problem (Markdown)</label>
+      <textarea class="field font-mono text-sm" id="problem" name="problem" rows="4">{p?.problem ?? ""}</textarea>
+    </div>
+    <div>
+      <label class="field-label" for="approach">Approach (Markdown)</label>
+      <textarea class="field font-mono text-sm" id="approach" name="approach" rows="6">{p?.approach ?? ""}</textarea>
+    </div>
+    <div>
+      <label class="field-label" for="outcome">Outcome (Markdown)</label>
+      <textarea class="field font-mono text-sm" id="outcome" name="outcome" rows="4">{p?.outcome ?? ""}</textarea>
+    </div>
+
+    <ImageField name="architectureImageUrl" label="Architecture diagram" value={p?.architectureImageUrl ?? ""} />
+  </fieldset>
 
   <div class="grid gap-5 sm:grid-cols-2">
     <div>

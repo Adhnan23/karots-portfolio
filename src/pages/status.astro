@@ -1,0 +1,129 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getStatusBoard, type MonitorStatus, type SparkPoint } from "@/lib/content";
+import { envFromLocals } from "@/lib/env";
+
+// Live data → never prerender.
+export const prerender = false;
+
+const board = await getStatusBoard(envFromLocals(Astro.locals));
+
+function relTime(d: Date | null): string {
+  if (!d) return "never";
+  const s = Math.round((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.round(s / 60)}m ago`;
+  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+  return `${Math.round(s / 86400)}d ago`;
+}
+
+function pct(v: number | null): string {
+  return v === null ? "—" : `${v}%`;
+}
+
+// Build a small inline sparkline (response time, coloured by up/down).
+const SW = 120;
+const SH = 28;
+function sparkBars(spark: SparkPoint[]): { x: number; h: number; ok: boolean }[] {
+  if (spark.length === 0) return [];
+  const max = Math.max(...spark.map((p) => p.responseMs), 1);
+  const gap = 2;
+  const bw = Math.max(1, (SW - gap * (spark.length - 1)) / spark.length);
+  return spark.map((p, i) => ({
+    x: i * (bw + gap),
+    h: p.ok ? Math.max(3, Math.round((p.responseMs / max) * SH)) : SH,
+    ok: p.ok,
+  }));
+}
+function barWidth(n: number): number {
+  const gap = 2;
+  return Math.max(1, (SW - gap * (n - 1)) / n);
+}
+
+const overall = board.monitors.length === 0
+  ? "no monitors"
+  : board.allOperational
+    ? "all systems operational"
+    : "degraded — investigating";
+---
+
+<BaseLayout
+  title="Status — Mohammed Sheik Adhnan"
+  description="Live uptime and response times for the production apps I self-host."
+  noindex={true}
+>
+  <section class="container-page py-16 md:py-20">
+    <p class="mono-label reveal">// status</p>
+    <div class="reveal mt-3 flex flex-wrap items-center gap-3" style="animation-delay:60ms">
+      <h1 class="font-display text-4xl font-bold md:text-5xl">Live infrastructure status</h1>
+    </div>
+    <div class="reveal mt-4 flex flex-wrap items-center gap-3" style="animation-delay:120ms">
+      <span class={`status ${board.allOperational ? "status-live" : ""}`}>
+        <span class="status-dot" style={board.allOperational ? "" : "background:var(--color-warn)"}></span>
+        {overall}
+      </span>
+      <span class="font-mono text-xs text-fg-subtle">· checked every ~15 min · updated {relTime(board.generatedAt)}</span>
+    </div>
+    <p class="reveal mt-4 max-w-2xl text-fg-muted" style="animation-delay:160ms">
+      Real healthchecks against the apps running on my self-hosted server — not a static badge.
+      Samples are recorded by a scheduled job and aggregated here on each request.
+    </p>
+
+    {
+      board.monitors.length === 0 ? (
+        <p class="mt-12 font-mono text-sm text-fg-subtle">No checks recorded yet — the pinger runs on a schedule; data appears after the first run.</p>
+      ) : (
+        <div class="mt-12 grid gap-4">
+          {board.monitors.map((m: MonitorStatus, i: number) => {
+            const bars = sparkBars(m.spark);
+            const bw = m.spark.length ? barWidth(m.spark.length) : 0;
+            return (
+              <div class="card reveal flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between" style={`animation-delay:${Math.min(i, 8) * 50}ms`}>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class={`status-dot ${m.up ? "" : ""}`} style={`width:0.55rem;height:0.55rem;border-radius:999px;background:${m.up === null ? "var(--color-fg-subtle)" : m.up ? "var(--color-online)" : "var(--color-danger)"};${m.up ? "box-shadow:0 0 0 3px color-mix(in srgb,var(--color-online) 22%,transparent)" : ""}`}></span>
+                    <a href={m.url} target="_blank" rel="noopener" class="truncate font-display text-lg font-semibold text-fg hover:text-accent">{m.name}</a>
+                  </div>
+                  <p class="mt-1 font-mono text-xs text-fg-subtle">
+                    {m.up === null ? "no data" : m.up ? "operational" : "down"} · {m.avgMs === null ? "—" : `${m.avgMs}ms avg`} · {relTime(m.lastCheckedAt)}
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-6">
+                  <svg width={SW} height={SH} viewBox={`0 0 ${SW} ${SH}`} class="hidden shrink-0 sm:block" aria-hidden="true">
+                    {bars.map((b) => (
+                      <rect
+                        x={b.x}
+                        y={SH - b.h}
+                        width={bw}
+                        height={b.h}
+                        rx="1"
+                        fill={b.ok ? "var(--color-accent)" : "var(--color-danger)"}
+                        opacity={b.ok ? "0.85" : "1"}
+                      />
+                    ))}
+                  </svg>
+
+                  <dl class="flex gap-5 font-mono text-xs">
+                    <div>
+                      <dt class="text-fg-subtle">24h</dt>
+                      <dd class="mt-0.5 text-fg">{pct(m.uptime24h)}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-fg-subtle">30d</dt>
+                      <dd class="mt-0.5 text-fg">{pct(m.uptime30d)}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-fg-subtle">90d</dt>
+                      <dd class="mt-0.5 text-fg">{pct(m.uptime90d)}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

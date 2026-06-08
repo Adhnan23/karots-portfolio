@@ -1,0 +1,63 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Flash from "@/components/admin/Flash.astro";
+import { getDb } from "@/db";
+import { monitors } from "@/db/schema";
+import { asc } from "drizzle-orm";
+import { envFromLocals } from "@/lib/env";
+
+export const prerender = false;
+const db = getDb(envFromLocals(Astro.locals));
+const items = await db.select().from(monitors).orderBy(asc(monitors.sort));
+---
+
+<AdminLayout title="Monitors">
+  <Flash />
+
+  <p class="mb-6 max-w-2xl text-sm text-fg-muted">
+    Services shown on the public <a href="/status" class="link-accent">/status</a> board. A scheduled
+    job pings each enabled URL every ~15 minutes and records uptime + response time.
+  </p>
+
+  <details class="card mb-6 p-5">
+    <summary class="cursor-pointer font-mono text-sm text-accent">+ add monitor</summary>
+    <form method="POST" action="/api/admin/monitors" class="mt-4 grid items-end gap-4 sm:grid-cols-[1fr_1.5fr_5rem_auto_auto]">
+      <div><label class="field-label">Name</label><input class="field" name="name" required /></div>
+      <div><label class="field-label">URL</label><input class="field" name="url" type="url" placeholder="https://…" required /></div>
+      <div><label class="field-label">Sort</label><input class="field w-20" name="sort" type="number" value="0" /></div>
+      <label class="flex items-center gap-2 pb-2 font-mono text-sm text-fg-muted">
+        <input type="checkbox" name="enabled" checked /> enabled
+      </label>
+      <button class="btn btn-primary" type="submit">add</button>
+    </form>
+  </details>
+
+  <div class="card overflow-x-auto">
+    <table class="admin-table">
+      <thead><tr><th>Name</th><th>URL</th><th>Sort</th><th>On</th><th></th></tr></thead>
+      <tbody>
+        {
+          items.map((m) => (
+            <tr>
+              <td colspan="5" class="!p-0">
+                <form method="POST" action="/api/admin/monitors" class="grid items-center gap-2 px-3 py-2 sm:grid-cols-[1fr_1.5fr_5rem_auto_auto]">
+                  <input type="hidden" name="id" value={m.id} />
+                  <input class="field" name="name" value={m.name} />
+                  <input class="field" name="url" value={m.url} />
+                  <input class="field" name="sort" type="number" value={m.sort} />
+                  <label class="flex items-center gap-2 font-mono text-xs text-fg-muted">
+                    <input type="checkbox" name="enabled" checked={m.enabled} /> on
+                  </label>
+                  <div class="flex gap-2 font-mono text-xs">
+                    <button class="text-fg-muted hover:text-accent" name="_action" value="save" type="submit">save</button>
+                    <button class="text-fg-muted hover:text-danger" name="_action" value="delete" type="submit" onclick="return confirm('Delete monitor and its history?')">del</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>

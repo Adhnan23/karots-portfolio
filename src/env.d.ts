@@ -11,6 +11,8 @@ interface CloudflareEnv {
   SESSION_SECRET: string;
   ALLOWED_GITHUB_LOGIN: string;
   GITHUB_DISPATCH_TOKEN?: string;
+  /** Read-only token for build-time GitHub presence (pinned repos + contributions). */
+  GITHUB_READ_TOKEN?: string;
   PUBLIC_SITE_URL?: string;
   UPLOADTHING_TOKEN?: string;
   R2_PUBLIC_URL?: string;
@@ -35,6 +37,7 @@ interface ImportMetaEnv {
   readonly SESSION_SECRET?: string;
   readonly ALLOWED_GITHUB_LOGIN?: string;
   readonly GITHUB_DISPATCH_TOKEN?: string;
+  readonly GITHUB_READ_TOKEN?: string;
   readonly PUBLIC_SITE_URL?: string;
   readonly UPLOADTHING_TOKEN?: string;
   readonly R2_PUBLIC_URL?: string;

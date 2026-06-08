@@ -14,7 +14,23 @@ const { slug } = Astro.params;
 const project = await getProjectBySlug(slug!);
 if (!project) return Astro.redirect("/404");
 
-const body = await renderMarkdown(project.description);
+// Case-study sections (all optional). If none are filled, fall back to the
+// freeform overview so older projects still render a body.
+const hasCaseStudy = Boolean(project.problem || project.approach || project.outcome);
+const caseStudy = hasCaseStudy
+  ? await Promise.all(
+      (
+        [
+          { label: "problem", md: project.problem },
+          { label: "approach", md: project.approach },
+          { label: "outcome", md: project.outcome },
+        ] as const
+      )
+        .filter((s) => s.md.trim())
+        .map(async (s) => ({ label: s.label, html: await renderMarkdown(s.md) }))
+    )
+  : [];
+const overviewHtml = project.description.trim() ? await renderMarkdown(project.description) : "";
 const links = projectLinks(project);
 const live = isLive(project);
 const src = sourceLabel(project);
@@ -64,9 +80,52 @@ const breadcrumbLd = {
       <p class="mt-4 max-w-2xl text-lg text-fg-muted">{project.summary}</p>
     </header>
 
+    {
+      project.metrics.length > 0 && (
+        <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {project.metrics.map((m) => (
+            <div class="card p-4">
+              <div class="font-display text-2xl font-bold text-accent md:text-3xl">{m.value}</div>
+              <div class="mt-1 font-mono text-[0.68rem] uppercase tracking-wide text-fg-subtle">{m.label}</div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+
     <div class="mt-10 grid gap-12 md:grid-cols-[1fr_240px]">
       <!-- Body -->
-      <div class="prose-tech order-2 md:order-1" set:html={body} />
+      <div class="order-2 md:order-1">
+        {
+          project.architectureImageUrl && (
+            <figure class="mb-10">
+              <img
+                src={project.architectureImageUrl}
+                alt={`${project.title} architecture`}
+                loading="lazy"
+                class="card mx-auto h-auto w-full"
+              />
+              <figcaption class="mt-2 text-center font-mono text-xs text-fg-subtle">
+                // architecture
+              </figcaption>
+            </figure>
+          )
+        }
+        {
+          hasCaseStudy ? (
+            <div class="flex flex-col gap-10">
+              {caseStudy.map((s) => (
+                <section>
+                  <h2 class="mono-label mb-3">// {s.label}</h2>
+                  <div class="prose-tech" set:html={s.html} />
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div class="prose-tech" set:html={overviewHtml} />
+          )
+        }
+      </div>
 
       <!-- Meta sidebar -->
       <aside class="order-1 flex flex-col gap-6 md:order-2">
