@@ -115,17 +115,22 @@ const structuredData = noindex ? extraLd : [personLd, siteLd, ...extraLd];
       ))
     }
 
-    <!-- Fonts -->
+    <!-- Fonts — loaded async (non-render-blocking) so first paint isn't gated
+         on a third-party stylesheet; text shows in the fallback then swaps. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    {(() => { const FONTS = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"; return (
+      <>
+        <link rel="preload" as="style" href={FONTS} />
+        <link rel="stylesheet" href={FONTS} media="print" onload="this.media='all'" />
+        <noscript><link rel="stylesheet" href={FONTS} /></noscript>
+      </>
+    ); })()}
   </head>
   <body class="min-h-screen flex flex-col">
+    <a href="#main" class="skip-link">Skip to content</a>
     <Header />
-    <main class="flex-1">
+    <main id="main" class="flex-1">
       <slot />
     </main>
     <Footer />

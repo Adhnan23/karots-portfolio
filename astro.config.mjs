@@ -10,6 +10,9 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: process.env.PUBLIC_SITE_URL || "https://karots.lk",
   output: "static",
+  // Inline page CSS into <head> so first paint isn't gated on a separate
+  // render-blocking stylesheet request (our CSS is small).
+  build: { inlineStylesheets: "always" },
   adapter: cloudflare({
     platformProxy: { enabled: true },
     imageService: "compile",
