@@ -1,4 +1,12 @@
 ---
+// Self-hosted fonts (woff2 served from our own origin; bundled by Vite). The
+// @font-face rules ship in the inlined page CSS, so the browser discovers and
+// fetches them on first paint — no third-party request, no render-block.
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
+import "@fontsource-variable/jetbrains-mono";
 import "@/styles/global.css";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -115,17 +123,8 @@ const structuredData = noindex ? extraLd : [personLd, siteLd, ...extraLd];
       ))
     }
 
-    <!-- Fonts — loaded async (non-render-blocking) so first paint isn't gated
-         on a third-party stylesheet; text shows in the fallback then swaps. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    {(() => { const FONTS = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"; return (
-      <>
-        <link rel="preload" as="style" href={FONTS} />
-        <link rel="stylesheet" href={FONTS} media="print" onload="this.media='all'" />
-        <noscript><link rel="stylesheet" href={FONTS} /></noscript>
-      </>
-    ); })()}
+    <!-- Fonts are self-hosted via @fontsource (imported in the frontmatter);
+         no third-party font requests. -->
   </head>
   <body class="min-h-screen flex flex-col">
     <a href="#main" class="skip-link">Skip to content</a>
